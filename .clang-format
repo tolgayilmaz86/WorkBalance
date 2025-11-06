@@ -1,0 +1,23 @@
+# Based on LLVM style with customizations to match existing code style
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+ColumnLimit: 120
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+PointerAlignment: Left
+ReferenceAlignment: Left
+NamespaceIndentation: None
+IncludeBlocks: Preserve
+SortIncludes: Never
+IndentCaseLabels: true
+SpaceBeforeParens: ControlStatements
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true

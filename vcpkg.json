@@ -1,0 +1,16 @@
+{
+  "name": "work-balance",
+  "version": "1.0.0",
+  "description": "WorkBalance - A modern C++20 ImGui application for work-life balance tracking",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    "glfw3",
+    "opengl"
+  ]
+}

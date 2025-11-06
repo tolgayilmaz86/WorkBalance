@@ -1,0 +1,224 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Configure Debug",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--preset",
+				"x64-debug"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Configure Release",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--preset",
+				"x64-release"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Debug",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"--preset",
+				"x64-debug"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn": "Configure Debug",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": [
+				"$msCompile"
+			]
+		},
+		{
+			"label": "Build Release",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"--preset",
+				"x64-release"
+			],
+			"group": "build",
+			"dependsOn": "Configure Release",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": [
+				"$msCompile"
+			]
+		},
+		{
+			"label": "Clean Debug",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${workspaceFolder}/out/build/x64-debug",
+				"--target",
+				"clean"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Clean Release",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${workspaceFolder}/out/build/x64-release",
+				"--target",
+				"clean"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Clean All",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Clean Debug",
+				"Clean Release"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			}
+		},
+		{
+			"label": "Full Clean",
+			"type": "shell",
+			"command": "Remove-Item",
+			"args": [
+				"-Recurse",
+				"-Force",
+				"${workspaceFolder}/out",
+				"-ErrorAction",
+				"SilentlyContinue"
+			],
+			"options": {
+				"shell": {
+					"executable": "pwsh.exe",
+					"args": [
+						"-Command"
+					]
+				}
+			},
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Debug",
+			"type": "shell",
+			"command": "${workspaceFolder}/out/build/x64-debug/Debug/WorkBalance.exe",
+			"group": "test",
+			"dependsOn": "Build Debug",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Release",
+			"type": "shell",
+			"command": "${workspaceFolder}/out/build/x64-release/Release/WorkBalance.exe",
+			"group": "test",
+			"dependsOn": "Build Release",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Build Debug",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"--preset",
+				"x64-debug"
+			],
+			"group": "build"
+		}
+	]
+}

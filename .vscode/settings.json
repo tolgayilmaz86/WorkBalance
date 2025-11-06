@@ -1,0 +1,32 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.compilerPath": "",
+    "C_Cpp.default.intelliSenseMode": "windows-msvc-x64",
+    "cmake.configureOnOpen": false,
+    "cmake.buildDirectory": "${workspaceFolder}/out/build/${presetName}",
+    "cmake.preferredGenerators": [
+        "Visual Studio 17 2022"
+    ],
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "*.cpp": "cpp",
+        "*.cc": "cpp",
+        "*.cxx": "cpp"
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "files.exclude": {
+        "**/out": true,
+        "**/.vs": true,
+        "**/CMakeFiles": true,
+        "**/CMakeCache.txt": true
+    },
+    "search.exclude": {
+        "**/out": true,
+        "**/.vs": true
+    }
+}
