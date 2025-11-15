@@ -4,7 +4,9 @@
 #include "assets/embedded_resources.h"
 #include "assets/icons/stb_image.h"
 
+#include <optional>
 #include <stdexcept>
+#include <string_view>
 
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -14,95 +16,69 @@
 #endif
 
 namespace WorkBalance::System {
+namespace {
+struct MonitorData {
+    GLFWmonitor* handle = nullptr;
+    const GLFWvidmode* mode = nullptr;
+    int x = 0;
+    int y = 0;
 
-MainWindow::MainWindow(int width, int height, std::string_view title) {
-    setupOpenGLContext();
+    [[nodiscard]] bool valid() const noexcept {
+        return handle != nullptr && mode != nullptr;
+    }
+};
 
-    m_window = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
-    if (m_window == nullptr) {
-        throw std::runtime_error("Failed to create GLFW window");
+[[nodiscard]] std::optional<MonitorData> queryPrimaryMonitor() {
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    if (monitor == nullptr) {
+        return std::nullopt;
     }
 
-    centerOnMonitor(width, height);
-    applyRoundedCorners();
-    setWindowIcon();
-
-    glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(0);
-}
-
-void MainWindow::setOverlayMode(bool overlay_mode) {
-    if (m_window == nullptr) {
-        return;
-    }
-
-    glfwSetWindowAttrib(m_window, GLFW_FLOATING, overlay_mode ? GLFW_TRUE : GLFW_FALSE);
-
-    if (overlay_mode) {
-        resizeForOverlay();
-    } else {
-        resizeForNormal();
-    }
-}
-
-MainWindow::MainWindow(MainWindow&& other) noexcept : WindowBase() {
-    m_window = other.m_window;
-    other.m_window = nullptr;
-}
-
-MainWindow& MainWindow::operator=(MainWindow&& other) noexcept {
-    if (this != &other) {
-        if (m_window != nullptr) {
-            glfwDestroyWindow(m_window);
-        }
-        m_window = other.m_window;
-        other.m_window = nullptr;
-    }
-    return *this;
-}
-
-void MainWindow::setupOpenGLContext() const {
-    using namespace Core;
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Configuration::GL_MAJOR_VERSION);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Configuration::GL_MINOR_VERSION);
-
-    if constexpr (Configuration::USE_CORE_PROFILE) {
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    }
-
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-}
-
-void MainWindow::centerOnMonitor(int width, int height) const {
-    GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-    if (primary_monitor == nullptr) {
-        return;
-    }
-
-    const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     if (mode == nullptr) {
-        return;
+        return std::nullopt;
     }
 
-    int monitor_x = 0;
-    int monitor_y = 0;
-    glfwGetMonitorPos(primary_monitor, &monitor_x, &monitor_y);
-
-    const int window_x = monitor_x + ((mode->width - width) / 2);
-    const int window_y = monitor_y + ((mode->height - height) / 2);
-
-    glfwSetWindowPos(m_window, window_x, window_y);
+    MonitorData data{monitor, mode};
+    glfwGetMonitorPos(monitor, &data.x, &data.y);
+    return data;
 }
 
-void MainWindow::applyRoundedCorners() const {
+void positionWindow(GLFWwindow* window, int x, int y) {
+    if (window != nullptr) {
+        glfwSetWindowPos(window, x, y);
+    }
+}
+
+void sizeWindow(GLFWwindow* window, int width, int height) {
+    if (window != nullptr) {
+        glfwSetWindowSize(window, width, height);
+    }
+}
+
+[[nodiscard]] int calculateWindowHeight(const MonitorData& monitor) {
+    constexpr int default_height = 600;
+    constexpr int taskbar_height = 90;
+    if (!monitor.valid()) {
+        return default_height;
+    }
+    return monitor.mode->height - taskbar_height;
+}
+
+[[nodiscard]] MonitorData monitorOrDefault(std::optional<MonitorData> monitor) {
+    if (monitor.has_value()) {
+        return *monitor;
+    }
+    return MonitorData{};
+}
+
 #ifdef _WIN32
-    if (!m_window) {
+void applyRoundedCornersToWindow(GLFWwindow* window) {
+    if (window == nullptr) {
         return;
     }
 
-    HWND hwnd = glfwGetWin32Window(m_window);
+    HWND hwnd = glfwGetWin32Window(window);
     if (hwnd == nullptr) {
         return;
     }
@@ -114,19 +90,24 @@ void MainWindow::applyRoundedCorners() const {
         DWMWCP_ROUNDSMALL = 3
     };
 
-    const DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_ROUND;
-    DwmSetWindowAttribute(hwnd, 33, &preference, sizeof(preference));
-#endif
+    constexpr DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_ROUND;
+    constexpr DWORD attribute = 33;
+    DwmSetWindowAttribute(hwnd, attribute, &preference, sizeof(preference));
 }
+#else
+void applyRoundedCornersToWindow(GLFWwindow*) {
+}
+#endif
 
-void MainWindow::setWindowIcon() const {
-    if (!m_window) {
+void setIcon(GLFWwindow* window) {
+    if (window == nullptr) {
         return;
     }
 
     int width = 0;
     int height = 0;
     int channels = 0;
+
     unsigned char* pixels = stbi_load_from_memory(app_icon_png_data, static_cast<int>(app_icon_png_data_size), &width,
                                                   &height, &channels, 4);
 
@@ -139,70 +120,137 @@ void MainWindow::setWindowIcon() const {
     icon.height = height;
     icon.pixels = pixels;
 
-    glfwSetWindowIcon(m_window, 1, &icon);
+    glfwSetWindowIcon(window, 1, &icon);
     stbi_image_free(pixels);
 }
 
-void MainWindow::resizeForOverlay() const {
+void applyOverlaySize(GLFWwindow* window, const MonitorData& monitor) {
     constexpr int overlay_width = 150;
     constexpr int overlay_height = 70;
-    glfwSetWindowSize(m_window, overlay_width, overlay_height);
+    sizeWindow(window, overlay_width, overlay_height);
 
-    GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-    if (primary_monitor == nullptr) {
+    if (!monitor.valid()) {
         return;
     }
 
-    const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
-    if (mode == nullptr) {
+    const int window_x = monitor.x + ((monitor.mode->width - overlay_width) / 2);
+    const int window_y = monitor.y + 10;
+    positionWindow(window, window_x, window_y);
+}
+
+void applyNormalSize(GLFWwindow* window, const MonitorData& monitor) {
+    const int height = calculateWindowHeight(monitor);
+    sizeWindow(window, Core::Configuration::DEFAULT_WINDOW_WIDTH, height);
+
+    if (!monitor.valid()) {
         return;
     }
 
-    int monitor_x = 0;
-    int monitor_y = 0;
-    glfwGetMonitorPos(primary_monitor, &monitor_x, &monitor_y);
+    const int window_x = monitor.x + ((monitor.mode->width - Core::Configuration::DEFAULT_WINDOW_WIDTH) / 2);
+    const int window_y = monitor.y + ((monitor.mode->height - height) / 2);
+    positionWindow(window, window_x, window_y);
+}
 
-    const int window_x = monitor_x + ((mode->width - overlay_width) / 2);
-    const int window_y = monitor_y + 10;
+void centerWindow(GLFWwindow* window, int width, int height) {
+    const auto monitor = queryPrimaryMonitor();
+    if (!monitor.has_value()) {
+        return;
+    }
 
-    glfwSetWindowPos(m_window, window_x, window_y);
+    const int window_x = monitor->x + ((monitor->mode->width - width) / 2);
+    const int window_y = monitor->y + ((monitor->mode->height - height) / 2);
+    positionWindow(window, window_x, window_y);
+}
+} // namespace
+
+MainWindow::MainWindow(int width, int height, std::string_view title) {
+    setupOpenGLContext();
+
+    m_window = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
+    if (m_window == nullptr) {
+        throw std::runtime_error("Failed to create GLFW window");
+    }
+
+    centerWindow(m_window, width, height);
+    applyRoundedCornersToWindow(m_window);
+    setIcon(m_window);
+
+    glfwMakeContextCurrent(m_window);
+    glfwSwapInterval(0);
+}
+
+void MainWindow::setOverlayMode(bool overlay_mode) {
+    if (m_window == nullptr) {
+        return;
+    }
+
+    glfwSetWindowAttrib(m_window, GLFW_FLOATING, overlay_mode ? GLFW_TRUE : GLFW_FALSE);
+    const MonitorData monitor = monitorOrDefault(queryPrimaryMonitor());
+
+    if (overlay_mode) {
+        applyOverlaySize(m_window, monitor);
+    } else {
+        applyNormalSize(m_window, monitor);
+    }
+}
+
+MainWindow::MainWindow(MainWindow&& other) noexcept : WindowBase() {
+    m_window = other.m_window;
+    other.m_window = nullptr;
+}
+
+MainWindow& MainWindow::operator=(MainWindow&& other) noexcept {
+    if (this == &other) {
+        return *this;
+    }
+
+    if (m_window != nullptr) {
+        glfwDestroyWindow(m_window);
+    }
+
+    m_window = other.m_window;
+    other.m_window = nullptr;
+    return *this;
+}
+
+void MainWindow::setupOpenGLContext() const {
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Core::Configuration::GL_MAJOR_VERSION);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Core::Configuration::GL_MINOR_VERSION);
+
+    if constexpr (Core::Configuration::USE_CORE_PROFILE) {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    }
+
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+}
+
+void MainWindow::centerOnMonitor(int width, int height) const {
+    centerWindow(m_window, width, height);
+}
+
+void MainWindow::applyRoundedCorners() const {
+    applyRoundedCornersToWindow(m_window);
+}
+
+void MainWindow::setWindowIcon() const {
+    setIcon(m_window);
+}
+
+void MainWindow::resizeForOverlay() const {
+    const MonitorData monitor = monitorOrDefault(queryPrimaryMonitor());
+    applyOverlaySize(m_window, monitor);
 }
 
 void MainWindow::resizeForNormal() const {
-    using namespace Core;
-    const int height = getFullHeight();
-    glfwSetWindowSize(m_window, Configuration::DEFAULT_WINDOW_WIDTH, height);
-
-    GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-    if (primary_monitor == nullptr) {
-        return;
-    }
-
-    const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
-    if (mode == nullptr) {
-        return;
-    }
-
-    int monitor_x = 0;
-    int monitor_y = 0;
-    glfwGetMonitorPos(primary_monitor, &monitor_x, &monitor_y);
-
-    const int window_x = monitor_x + ((mode->width - Configuration::DEFAULT_WINDOW_WIDTH) / 2);
-    const int window_y = monitor_y + ((mode->height - height) / 2);
-
-    glfwSetWindowPos(m_window, window_x, window_y);
+    const MonitorData monitor = monitorOrDefault(queryPrimaryMonitor());
+    applyNormalSize(m_window, monitor);
 }
 
 int MainWindow::getFullHeight() const {
-    GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-    if (primary_monitor != nullptr) {
-        const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
-        if (mode != nullptr) {
-            constexpr int taskbar_height = 90;
-            return mode->height - taskbar_height;
-        }
-    }
-    return 600;
+    const MonitorData monitor = monitorOrDefault(queryPrimaryMonitor());
+    return calculateWindowHeight(monitor);
 }
 
 } // namespace WorkBalance::System

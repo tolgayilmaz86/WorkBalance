@@ -5,11 +5,11 @@
 #include <app/ui/MainWindowView.h>
 
 #include <GLFW/glfw3.h>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "assets/fonts/IconsFontAwesome5Pro.h"
@@ -17,6 +17,92 @@
 #include <ui/AppState.h>
 
 namespace WorkBalance::App::UI {
+namespace {
+struct WindowCoordinates {
+    int window_x = 0;
+    int window_y = 0;
+    double cursor_x = 0.0;
+    double cursor_y = 0.0;
+};
+
+[[nodiscard]] WindowCoordinates queryWindowCoordinates(GLFWwindow* handle) {
+    WindowCoordinates coordinates{};
+    if (handle == nullptr) {
+        return coordinates;
+    }
+
+    glfwGetWindowPos(handle, &coordinates.window_x, &coordinates.window_y);
+    glfwGetCursorPos(handle, &coordinates.cursor_x, &coordinates.cursor_y);
+    coordinates.cursor_x += static_cast<double>(coordinates.window_x);
+    coordinates.cursor_y += static_cast<double>(coordinates.window_y);
+    return coordinates;
+}
+
+class ScopedFont {
+  public:
+    explicit ScopedFont(ImFont* font) : m_font(font) {
+        if (m_font != nullptr) {
+            ImGui::PushFont(m_font);
+        }
+    }
+
+    ScopedFont(const ScopedFont&) = delete;
+    ScopedFont& operator=(const ScopedFont&) = delete;
+    ScopedFont(ScopedFont&&) = delete;
+    ScopedFont& operator=(ScopedFont&&) = delete;
+
+    ~ScopedFont() {
+        if (m_font != nullptr) {
+            ImGui::PopFont();
+        }
+    }
+
+  private:
+    ImFont* m_font;
+};
+
+[[nodiscard]] ImVec2 calculateTextSize(ImFont* font, std::string_view text) {
+    const char* const start = text.data();
+    const char* const end = start + text.size();
+
+    if (font == nullptr) {
+        return ImGui::CalcTextSize(start, end);
+    }
+
+    ScopedFont scoped_font(font);
+    return ImGui::CalcTextSize(start, end);
+}
+
+void updateWindowDragging(GLFWwindow* handle, bool hovered, bool& dragging, ImVec2& offset,
+                          float drag_threshold = 0.0f) {
+    if (handle == nullptr) {
+        dragging = false;
+        return;
+    }
+
+    if (hovered && ImGui::IsMouseClicked(0)) {
+        const WindowCoordinates coordinates = queryWindowCoordinates(handle);
+        offset = ImVec2(static_cast<float>(coordinates.cursor_x - coordinates.window_x),
+                        static_cast<float>(coordinates.cursor_y - coordinates.window_y));
+        dragging = true;
+    }
+
+    if (!dragging) {
+        return;
+    }
+
+    if (ImGui::IsMouseDragging(0, drag_threshold)) {
+        const WindowCoordinates coordinates = queryWindowCoordinates(handle);
+        const int new_x = static_cast<int>(coordinates.cursor_x - offset.x);
+        const int new_y = static_cast<int>(coordinates.cursor_y - offset.y);
+        glfwSetWindowPos(handle, new_x, new_y);
+    }
+
+    if (ImGui::IsMouseReleased(0)) {
+        dragging = false;
+    }
+}
+} // namespace
 MainWindowView::MainWindowView(System::MainWindow& window, App::ImGuiLayer& imgui, Core::Timer& timer,
                                Core::TaskManager& taskManager, AppState& state, MainWindowCallbacks callbacks)
     : m_window(window), m_imgui(imgui), m_timer(timer), m_task_manager(taskManager), m_state(state),
@@ -55,75 +141,21 @@ void MainWindowView::renderOverlayMode() {
     const float window_width = ImGui::GetWindowSize().x;
     const float window_height = ImGui::GetWindowSize().y;
 
-    std::string time_str = WorkBalance::TimeFormatter::formatTime(m_timer.getRemainingTime());
-
+    const std::string time_text = WorkBalance::TimeFormatter::formatTime(m_timer.getRemainingTime());
     ImFont* overlay_font = m_imgui.overlayFont();
-    ImVec2 text_size = ImGui::CalcTextSize(time_str.c_str());
-
-    if (overlay_font != nullptr) {
-        ImGui::PushFont(overlay_font);
-        text_size = ImGui::CalcTextSize(time_str.c_str());
-        ImGui::PopFont();
-    }
+    const ImVec2 text_size = calculateTextSize(overlay_font, time_text);
 
     ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-    if (overlay_font != nullptr) {
-        ImGui::PushFont(overlay_font);
+    {
+        ScopedFont font_scope(overlay_font);
+        ImGui::TextUnformatted(time_text.c_str());
     }
-
-    ImGui::Text("%s", time_str.c_str());
-
-    if (overlay_font != nullptr) {
-        ImGui::PopFont();
-    }
-
     ImGui::PopStyleColor();
 
-    GLFWwindow* handle = m_window.get();
-    if (handle == nullptr) {
-        return;
-    }
-
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0)) {
-        m_state.main_overlay_dragging = true;
-
-        int win_x = 0;
-        int win_y = 0;
-        glfwGetWindowPos(handle, &win_x, &win_y);
-
-        double mouse_x = 0.0;
-        double mouse_y = 0.0;
-        glfwGetCursorPos(handle, &mouse_x, &mouse_y);
-
-        mouse_x += win_x;
-        mouse_y += win_y;
-
-        m_state.main_overlay_drag_offset =
-            ImVec2(static_cast<float>(mouse_x - win_x), static_cast<float>(mouse_y - win_y));
-    }
-
-    if (m_state.main_overlay_dragging) {
-        if (ImGui::IsMouseDragging(0)) {
-            int win_x = 0;
-            int win_y = 0;
-            glfwGetWindowPos(handle, &win_x, &win_y);
-
-            double mouse_x = 0.0;
-            double mouse_y = 0.0;
-            glfwGetCursorPos(handle, &mouse_x, &mouse_y);
-
-            mouse_x += win_x;
-            mouse_y += win_y;
-
-            const int new_x = static_cast<int>(mouse_x - m_state.main_overlay_drag_offset.x);
-            const int new_y = static_cast<int>(mouse_y - m_state.main_overlay_drag_offset.y);
-            glfwSetWindowPos(handle, new_x, new_y);
-        } else if (ImGui::IsMouseReleased(0)) {
-            m_state.main_overlay_dragging = false;
-        }
-    }
+    const bool overlay_hovered = ImGui::IsWindowHovered();
+    updateWindowDragging(m_window.get(), overlay_hovered, m_state.main_overlay_dragging,
+                         m_state.main_overlay_drag_offset);
 }
 
 void MainWindowView::renderHeader() {
@@ -719,9 +751,8 @@ void MainWindowView::renderTaskList() {
 
             ImGui::PopStyleColor();
 
-            std::stringstream progress_ss;
-            progress_ss << task.completed_pomodoros << "/" << task.estimated_pomodoros;
-            const std::string progress = progress_ss.str();
+            const std::string progress =
+                std::to_string(task.completed_pomodoros) + "/" + std::to_string(task.estimated_pomodoros);
 
             const float progress_width = ImGui::CalcTextSize(progress.c_str()).x;
             constexpr float menu_button_width = 24.0f;
@@ -1087,7 +1118,7 @@ void MainWindowView::renderTimer() {
 void MainWindowView::renderTimerFrame() {
     const float window_width = ImGui::GetWindowSize().x;
     const float frame_width = std::min(600.0f, window_width - 40.0f);
-    constexpr float frame_padding = 35.0f;
+    constexpr float frame_padding = 5.0f;
 
     ImGui::SetCursorPosX((window_width - frame_width) * 0.5f);
 
@@ -1097,12 +1128,12 @@ void MainWindowView::renderTimerFrame() {
     ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.5f);
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
 
-    constexpr float frame_height = 360.0f;
-    if (ImGui::BeginChild("TimerFrame", ImVec2(frame_width, frame_height), 1, ImGuiWindowFlags_NoScrollbar)) {
+    constexpr float frame_height = 320.0f;
+    constexpr ImGuiWindowFlags timer_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    if (ImGui::BeginChild("TimerFrame", ImVec2(frame_width, frame_height), 1, timer_flags)) {
         ImGui::Spacing();
         renderModeButtons();
         renderTimer();
-        ImGui::Spacing();
     }
     ImGui::EndChild();
 
@@ -1117,9 +1148,8 @@ void MainWindowView::renderCurrentTask() {
         return;
     }
 
-    std::stringstream ss;
-    ss << "#" << (m_state.current_task_index + 1) << " " << tasks[m_state.current_task_index].name;
-    const std::string current_task = ss.str();
+    const std::string current_task =
+        "#" + std::to_string(m_state.current_task_index + 1) + " " + tasks[m_state.current_task_index].name;
 
     const float window_width = ImGui::GetWindowSize().x;
     const float text_width = ImGui::CalcTextSize(current_task.c_str()).x;
@@ -1135,9 +1165,9 @@ void MainWindowView::renderCurrentTask() {
 void MainWindowView::renderPomodoroCounter() const {
     ImGui::Spacing();
 
-    std::stringstream counter_ss;
-    counter_ss << ICON_FA_CLOCK << " Pomos: " << m_state.completed_pomodoros << "/" << m_state.target_pomodoros;
-    const std::string counter_text = counter_ss.str();
+    const std::string counter_text = std::string(ICON_FA_CLOCK) +
+                                     " Pomos: " + std::to_string(m_state.completed_pomodoros) + "/" +
+                                     std::to_string(m_state.target_pomodoros);
 
     const float window_width = ImGui::GetWindowSize().x;
     const float text_width = ImGui::CalcTextSize(counter_text.c_str()).x;
@@ -1149,53 +1179,8 @@ void MainWindowView::renderPomodoroCounter() const {
 }
 
 void MainWindowView::handleWindowDragging() {
-    GLFWwindow* handle = m_window.get();
-    if (handle == nullptr) {
-        return;
-    }
-
-    if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive()) {
-        if (ImGui::IsMouseClicked(0)) {
-            m_state.main_window_dragging = true;
-
-            int win_x = 0;
-            int win_y = 0;
-            glfwGetWindowPos(handle, &win_x, &win_y);
-
-            double mouse_x = 0.0;
-            double mouse_y = 0.0;
-            glfwGetCursorPos(handle, &mouse_x, &mouse_y);
-
-            mouse_x += win_x;
-            mouse_y += win_y;
-
-            m_state.main_window_drag_offset =
-                ImVec2(static_cast<float>(mouse_x - win_x), static_cast<float>(mouse_y - win_y));
-        }
-    }
-
-    if (m_state.main_window_dragging) {
-        if (ImGui::IsMouseDragging(0, 5.0f)) {
-            int win_x = 0;
-            int win_y = 0;
-            glfwGetWindowPos(handle, &win_x, &win_y);
-
-            double mouse_x = 0.0;
-            double mouse_y = 0.0;
-            glfwGetCursorPos(handle, &mouse_x, &mouse_y);
-
-            mouse_x += win_x;
-            mouse_y += win_y;
-
-            const int new_x = static_cast<int>(mouse_x - m_state.main_window_drag_offset.x);
-            const int new_y = static_cast<int>(mouse_y - m_state.main_window_drag_offset.y);
-            glfwSetWindowPos(handle, new_x, new_y);
-        }
-
-        if (ImGui::IsMouseReleased(0)) {
-            m_state.main_window_dragging = false;
-        }
-    }
+    const bool can_drag = ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive();
+    updateWindowDragging(m_window.get(), can_drag, m_state.main_window_dragging, m_state.main_window_drag_offset, 5.0f);
 }
 
 } // namespace WorkBalance::App::UI

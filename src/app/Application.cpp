@@ -4,11 +4,13 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 
 #include <app/ImGuiLayer.h>
 #include <app/ui/MainWindowView.h>
@@ -40,6 +42,25 @@ namespace {
 
     return Core::Configuration::DEFAULT_WINDOW_HEIGHT;
 }
+
+class ScopedGLFWContext {
+  public:
+    explicit ScopedGLFWContext(GLFWwindow* new_context) : m_previous(glfwGetCurrentContext()) {
+        glfwMakeContextCurrent(new_context);
+    }
+
+    ScopedGLFWContext(const ScopedGLFWContext&) = delete;
+    ScopedGLFWContext& operator=(const ScopedGLFWContext&) = delete;
+    ScopedGLFWContext(ScopedGLFWContext&&) = delete;
+    ScopedGLFWContext& operator=(ScopedGLFWContext&&) = delete;
+
+    ~ScopedGLFWContext() {
+        glfwMakeContextCurrent(m_previous);
+    }
+
+  private:
+    GLFWwindow* m_previous{nullptr};
+};
 } // namespace
 
 class Application::Impl {
@@ -49,9 +70,13 @@ class Application::Impl {
 
   private:
     void setupCallbacks();
-    void initializeTasks();
     void updateTimer();
     void handleTimerComplete();
+    void updateOverlayState();
+    void renderOverlayFrame();
+    [[nodiscard]] bool shouldRenderOverlay() const noexcept;
+    [[nodiscard]] bool isValidTaskIndex(size_t index) const noexcept;
+    void adjustCurrentTaskIndex() noexcept;
     void updatePomodoroCounters();
     void resetTimer();
     void setTimerMode(Core::TimerMode mode);
@@ -65,6 +90,18 @@ class Application::Impl {
     void toggleTaskCompletion(size_t index);
     void renderMainWindowFrame();
     void updateWindowTitle(int remaining_seconds);
+
+    template <typename Callback>
+    void withAudio(Callback&& callback) {
+        if (m_audio && m_audio->isInitialized()) {
+            std::forward<Callback>(callback)(*m_audio);
+        }
+    }
+
+    [[nodiscard]] static constexpr int minutesToSeconds(int minutes) noexcept {
+        constexpr int seconds_per_minute = 60;
+        return minutes * seconds_per_minute;
+    }
 
   private:
     System::GLFWManager m_glfw_manager{};
@@ -100,21 +137,22 @@ Application::Impl::Impl()
               .onTaskCompletionToggled = [this](size_t index) { toggleTaskCompletion(index); }}),
       m_overlay_view(m_imgui_layer, m_timer, m_state) {
     m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
-    initializeTasks();
+    updatePomodoroCounters();
     updateWindowTitle(m_timer.getRemainingTime());
     setupCallbacks();
 }
 
 void Application::Impl::run() {
-    auto last_frame_time = std::chrono::high_resolution_clock::now();
+    using clock = std::chrono::steady_clock;
+    auto last_frame_time = clock::now();
+    const std::chrono::duration<double> frame_duration{Core::Configuration::FRAME_TIME};
 
     while (!m_window.shouldClose()) {
-        const auto current_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = current_time - last_frame_time;
+        const auto current_time = clock::now();
+        const std::chrono::duration<double> elapsed = current_time - last_frame_time;
 
-        if (elapsed.count() < Core::Configuration::FRAME_TIME) {
-            std::this_thread::sleep_for(
-                std::chrono::duration<double>(Core::Configuration::FRAME_TIME - elapsed.count()));
+        if (elapsed < frame_duration) {
+            std::this_thread::sleep_for(frame_duration - elapsed);
         }
 
         last_frame_time = current_time;
@@ -125,23 +163,37 @@ void Application::Impl::run() {
         m_imgui_layer.newFrame();
         m_main_view.render();
         renderMainWindowFrame();
-
-        if (m_state.show_timer_overlay && !m_overlay_window.isVisible()) {
-            m_overlay_window.show();
-        } else if (!m_state.show_timer_overlay && m_overlay_window.isVisible()) {
-            m_overlay_window.hide();
-        }
-
-        GLFWwindow* overlay_handle = m_overlay_window.get();
-        if (m_state.show_timer_overlay && overlay_handle != nullptr && !m_overlay_window.shouldClose()) {
-            glfwMakeContextCurrent(overlay_handle);
-            m_imgui_layer.newFrame();
-            m_overlay_view.renderContent(m_overlay_window);
-            m_overlay_view.renderFrame(m_overlay_window);
-            m_overlay_window.swapBuffers();
-            glfwMakeContextCurrent(m_window.get());
-        }
+        updateOverlayState();
+        renderOverlayFrame();
     }
+}
+
+void Application::Impl::updateOverlayState() {
+    if (m_state.show_timer_overlay == m_overlay_window.isVisible()) {
+        return;
+    }
+
+    if (m_state.show_timer_overlay) {
+        m_overlay_window.show();
+    } else {
+        m_overlay_window.hide();
+    }
+}
+
+void Application::Impl::renderOverlayFrame() {
+    if (!shouldRenderOverlay()) {
+        return;
+    }
+
+    ScopedGLFWContext overlay_context(m_overlay_window.get());
+    m_imgui_layer.newFrame();
+    m_overlay_view.renderContent(m_overlay_window);
+    m_overlay_view.renderFrame(m_overlay_window);
+    m_overlay_window.swapBuffers();
+}
+
+bool Application::Impl::shouldRenderOverlay() const noexcept {
+    return m_state.show_timer_overlay && m_overlay_window.get() != nullptr && !m_overlay_window.shouldClose();
 }
 
 void Application::Impl::setupCallbacks() {
@@ -166,13 +218,9 @@ void Application::Impl::setupCallbacks() {
     });
 }
 
-void Application::Impl::initializeTasks() {
-    updatePomodoroCounters();
-}
-
 void Application::Impl::updateTimer() {
     const int previous_remaining = m_timer.getRemainingTime();
-    m_timer.update();
+    [[maybe_unused]] const auto update_result = m_timer.update();
 
     const int current_remaining = m_timer.getRemainingTime();
     if (current_remaining != previous_remaining) {
@@ -187,13 +235,10 @@ void Application::Impl::updateTimer() {
 void Application::Impl::handleTimerComplete() {
     m_timer.stop();
 
-    if (m_audio && m_audio->isInitialized()) {
-        m_audio->playBellSound();
-    }
+    withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
 
     if (m_timer.getCurrentMode() == Core::TimerMode::Pomodoro) {
-        if (!m_task_manager.getTasks().empty() &&
-            m_state.current_task_index < static_cast<int>(m_task_manager.getTasks().size())) {
+        if (m_state.current_task_index >= 0 && isValidTaskIndex(static_cast<size_t>(m_state.current_task_index))) {
             m_task_manager.incrementTaskPomodoros(m_state.current_task_index);
         }
 
@@ -201,6 +246,20 @@ void Application::Impl::handleTimerComplete() {
     }
 
     resetTimer();
+}
+
+bool Application::Impl::isValidTaskIndex(size_t index) const noexcept {
+    return index < m_task_manager.getTasks().size();
+}
+
+void Application::Impl::adjustCurrentTaskIndex() noexcept {
+    const auto tasks = m_task_manager.getTasks();
+    if (tasks.empty()) {
+        m_state.current_task_index = 0;
+        return;
+    }
+
+    m_state.current_task_index = std::clamp(m_state.current_task_index, 0, static_cast<int>(tasks.size()) - 1);
 }
 
 void Application::Impl::updatePomodoroCounters() {
@@ -220,9 +279,7 @@ void Application::Impl::setTimerMode(Core::TimerMode mode) {
 }
 
 void Application::Impl::toggleTimer() {
-    if (m_audio && m_audio->isInitialized()) {
-        m_audio->playClickSound();
-    }
+    withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
     m_timer.toggle();
 }
 
@@ -236,9 +293,9 @@ void Application::Impl::requestClose() {
 }
 
 void Application::Impl::applyDurations(int pomodoro_minutes, int short_break_minutes, int long_break_minutes) {
-    m_timer.setPomodoroDuration(pomodoro_minutes * 60);
-    m_timer.setShortBreakDuration(short_break_minutes * 60);
-    m_timer.setLongBreakDuration(long_break_minutes * 60);
+    m_timer.setPomodoroDuration(minutesToSeconds(pomodoro_minutes));
+    m_timer.setShortBreakDuration(minutesToSeconds(short_break_minutes));
+    m_timer.setLongBreakDuration(minutesToSeconds(long_break_minutes));
 
     if (m_timer.getState() == Core::TimerState::Stopped) {
         resetTimer();
@@ -251,23 +308,17 @@ void Application::Impl::addTask(std::string_view name, int estimated) {
 }
 
 void Application::Impl::removeTask(size_t index) {
-    if (index >= m_task_manager.getTasks().size()) {
+    if (!isValidTaskIndex(index)) {
         return;
     }
 
     m_task_manager.removeTask(index);
-
-    if (m_task_manager.getTasks().empty()) {
-        m_state.current_task_index = 0;
-    } else if (m_state.current_task_index >= static_cast<int>(m_task_manager.getTasks().size())) {
-        m_state.current_task_index = static_cast<int>(m_task_manager.getTasks().size()) - 1;
-    }
-
+    adjustCurrentTaskIndex();
     updatePomodoroCounters();
 }
 
 void Application::Impl::updateTask(size_t index, std::string_view name, int estimated, int completed) {
-    if (index >= m_task_manager.getTasks().size()) {
+    if (!isValidTaskIndex(index)) {
         return;
     }
 
@@ -276,7 +327,7 @@ void Application::Impl::updateTask(size_t index, std::string_view name, int esti
 }
 
 void Application::Impl::toggleTaskCompletion(size_t index) {
-    if (index >= m_task_manager.getTasks().size()) {
+    if (!isValidTaskIndex(index)) {
         return;
     }
 
@@ -316,9 +367,6 @@ Application::Application() : m_impl(std::make_unique<Application::Impl>()) {
 }
 
 Application::~Application() = default;
-
-Application::Application(Application&&) noexcept = default;
-Application& Application::operator=(Application&&) noexcept = default;
 
 void Application::run() {
     m_impl->run();

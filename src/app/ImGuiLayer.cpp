@@ -5,6 +5,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include <iostream>
+#include <string_view>
 
 #include "assets/embedded_resources.h"
 #include "assets/fonts/IconsFontAwesome5Pro.h"
@@ -58,51 +59,44 @@ void ImGuiLayer::render() {
 void ImGuiLayer::loadFonts(ImGuiIO& io) {
     ImGui::StyleColorsDark();
 
-    ImFontConfig font_config;
-    font_config.FontDataOwnedByAtlas = false;
+    ImFontConfig base_config{};
+    base_config.FontDataOwnedByAtlas = false;
 
-    const ImFontConfig roboto_config = font_config;
-    m_large_font = io.Fonts->AddFontFromMemoryTTF((void*)roboto_medium_data, static_cast<int>(roboto_medium_data_size),
-                                                  Core::Configuration::REGULAR_FONT_SIZE, &roboto_config);
+    const auto addFont = [&](ImFontConfig config, const unsigned char* data, size_t data_size, float font_size,
+                             std::string_view warning, const ImWchar* ranges = nullptr) -> ImFont* {
+        ImFont* font =
+            io.Fonts->AddFontFromMemoryTTF(static_cast<void*>(const_cast<unsigned char*>(data)),
+                                           static_cast<int>(data_size), font_size, &config, ranges);
 
+        if (font == nullptr && !warning.empty()) {
+            std::cerr << "Warning: " << warning << '\n';
+        }
+        return font;
+    };
+
+    ImFontConfig roboto_config = base_config;
+    m_large_font = addFont(roboto_config, roboto_medium_data, roboto_medium_data_size,
+                           Core::Configuration::REGULAR_FONT_SIZE,
+                           "Failed to load embedded Roboto font. Using default font.");
     if (m_large_font == nullptr) {
-        std::cerr << "Warning: Failed to load embedded Roboto font. Using default font.\n";
         m_large_font = io.Fonts->AddFontDefault();
     }
 
     constexpr ImWchar icons_ranges[] = {0xf000, 0xf8ff, 0};
-    ImFontConfig icons_config = font_config;
+    ImFontConfig icons_config = base_config;
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
     icons_config.GlyphMinAdvanceX = Core::Configuration::REGULAR_FONT_SIZE;
+    addFont(icons_config, fontawesome_data, fontawesome_data_size, Core::Configuration::REGULAR_FONT_SIZE,
+            "Failed to load embedded FontAwesome", icons_ranges);
 
-    ImFont* fontawesome =
-        io.Fonts->AddFontFromMemoryTTF((void*)fontawesome_data, static_cast<int>(fontawesome_data_size),
-                                       Core::Configuration::REGULAR_FONT_SIZE, &icons_config, icons_ranges);
-    if (fontawesome == nullptr) {
-        std::cerr << "Warning: Failed to load embedded FontAwesome\n";
-    }
-
-    ImFontConfig formula_config = font_config;
-
-    m_timer_font = io.Fonts->AddFontFromMemoryTTF((void*)formula1_bold_data, static_cast<int>(formula1_bold_data_size),
-                                                  Core::Configuration::TIMER_FONT_SIZE, &formula_config);
-    if (m_timer_font == nullptr) {
-        std::cerr << "Warning: Failed to load embedded Formula1-Bold font\n";
-    }
-
-    m_button_font = io.Fonts->AddFontFromMemoryTTF((void*)formula1_wide_data, static_cast<int>(formula1_wide_data_size),
-                                                   Core::Configuration::BUTTON_FONT_SIZE, &formula_config);
-    if (m_button_font == nullptr) {
-        std::cerr << "Warning: Failed to load embedded Formula1-Wide font\n";
-    }
-
-    m_overlay_font =
-        io.Fonts->AddFontFromMemoryTTF((void*)formula1_regular_data, static_cast<int>(formula1_regular_data_size),
-                                       Core::Configuration::OVERLAY_FONT_SIZE, &formula_config);
-    if (m_overlay_font == nullptr) {
-        std::cerr << "Warning: Failed to load embedded Formula1-Regular font\n";
-    }
+    ImFontConfig formula_config = base_config;
+    m_timer_font = addFont(formula_config, formula1_bold_data, formula1_bold_data_size,
+                           Core::Configuration::TIMER_FONT_SIZE, "Failed to load embedded Formula1-Bold font");
+    m_button_font = addFont(formula_config, formula1_wide_data, formula1_wide_data_size,
+                            Core::Configuration::BUTTON_FONT_SIZE, "Failed to load embedded Formula1-Wide font");
+    m_overlay_font = addFont(formula_config, formula1_regular_data, formula1_regular_data_size,
+                             Core::Configuration::OVERLAY_FONT_SIZE, "Failed to load embedded Formula1-Regular font");
 
     if (!io.Fonts->Build()) {
         std::cerr << "Error: Failed to build ImGui font atlas\n";

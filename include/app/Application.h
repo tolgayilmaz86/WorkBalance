@@ -8,11 +8,12 @@ class Application {
     Application();
     ~Application();
 
+    Application(Application&&) noexcept = default;
+    Application& operator=(Application&&) noexcept = default;
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
-    Application(Application&&) noexcept;
-    Application& operator=(Application&&) noexcept;
 
+    /// @brief Runs the main application loop.
     void run();
 
   private:

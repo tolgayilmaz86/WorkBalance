@@ -1,6 +1,7 @@
 #include <core/Task.h>
 
 #include <algorithm>
+#include <numeric>
 
 namespace WorkBalance::Core {
 
@@ -31,33 +32,26 @@ void TaskManager::removeTask(size_t index) {
 }
 
 void TaskManager::updateTask(size_t index, std::string_view name, int estimated, int completed) {
-    if (index >= m_tasks.size()) {
-        return;
+    if (Task* task = getTask(index); task != nullptr) {
+        task->name = name;
+        task->estimated_pomodoros = estimated;
+        task->completed_pomodoros = completed;
+        updateCounters();
     }
-
-    Task& task = m_tasks[index];
-    task.name = name;
-    task.estimated_pomodoros = estimated;
-    task.completed_pomodoros = completed;
-    updateCounters();
 }
 
 void TaskManager::toggleTaskCompletion(size_t index) {
-    if (index >= m_tasks.size()) {
-        return;
+    if (Task* task = getTask(index); task != nullptr) {
+        task->completed = !task->completed;
+        updateCounters();
     }
-
-    m_tasks[index].completed = !m_tasks[index].completed;
-    updateCounters();
 }
 
 void TaskManager::incrementTaskPomodoros(size_t index) {
-    if (index >= m_tasks.size()) {
-        return;
+    if (Task* task = getTask(index); task != nullptr) {
+        task->completed_pomodoros++;
+        updateCounters();
     }
-
-    m_tasks[index].completed_pomodoros++;
-    updateCounters();
 }
 
 std::vector<const Task*> TaskManager::getIncompleteTasks() const {
@@ -107,15 +101,22 @@ void TaskManager::clear() noexcept {
 }
 
 void TaskManager::updateCounters() noexcept {
-    m_target_pomodoros = 0;
-    m_completed_pomodoros = 0;
+    struct CounterTotals {
+        int target = 0;
+        int completed = 0;
+    };
 
-    for (const Task& task : m_tasks) {
-        if (!task.completed) {
-            m_target_pomodoros += task.estimated_pomodoros;
-        }
-        m_completed_pomodoros += task.completed_pomodoros;
-    }
+    const CounterTotals totals =
+        std::accumulate(m_tasks.begin(), m_tasks.end(), CounterTotals{}, [](CounterTotals acc, const Task& task) {
+            if (!task.completed) {
+                acc.target += task.estimated_pomodoros;
+            }
+            acc.completed += task.completed_pomodoros;
+            return acc;
+        });
+
+    m_target_pomodoros = totals.target;
+    m_completed_pomodoros = totals.completed;
 }
 
 } // namespace WorkBalance::Core

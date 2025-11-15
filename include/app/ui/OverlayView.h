@@ -12,7 +12,12 @@ class OverlayView {
         : m_imgui(imgui), m_timer(timer), m_state(state) {
     }
 
+    /// @brief Renders the content of the overlay window.
+    /// @param overlay_window The overlay window to render content for.
     void renderContent(System::OverlayWindow& overlay_window);
+
+    /// @brief Renders the overlay window frame.
+    /// @param overlay_window The overlay window to render the frame for.
     void renderFrame(System::OverlayWindow& overlay_window);
 
   private:

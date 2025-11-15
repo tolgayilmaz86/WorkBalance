@@ -1,6 +1,32 @@
 #include <core/Timer.h>
 
+#include <utility>
+
 namespace WorkBalance::Core {
+namespace {
+using clock = std::chrono::steady_clock;
+
+template <typename Fn>
+void assignIfChanged(int& field, int value, Fn&& callback) noexcept {
+    if (field == value) {
+        return;
+    }
+    field = value;
+    std::forward<Fn>(callback)();
+}
+
+[[nodiscard]] int durationForMode(TimerMode mode, int pomodoro, int short_break, int long_break) noexcept {
+    switch (mode) {
+        case TimerMode::Pomodoro:
+            return pomodoro;
+        case TimerMode::ShortBreak:
+            return short_break;
+        case TimerMode::LongBreak:
+            return long_break;
+    }
+    return pomodoro;
+}
+} // namespace
 
 Timer::Timer(int pomodoro_duration, int short_break_duration, int long_break_duration) noexcept
     : m_pomodoro_duration(pomodoro_duration), m_short_break_duration(short_break_duration),
@@ -13,27 +39,32 @@ bool Timer::update() noexcept {
         return false;
     }
 
-    const auto current_time = std::chrono::steady_clock::now();
+    const auto current_time = clock::now();
     const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - m_last_time);
 
-    if (elapsed.count() >= 1) {
-        --m_remaining_time;
-        m_last_time = current_time;
-
-        if (m_remaining_time <= 0) {
-            m_timer_state = TimerState::Stopped;
-            return true;
-        }
+    if (elapsed.count() <= 0) {
+        return false;
     }
 
-    return false;
+    m_remaining_time -= static_cast<int>(elapsed.count());
+    m_last_time = current_time;
+
+    if (m_remaining_time > 0) {
+        return false;
+    }
+
+    m_remaining_time = 0;
+    m_timer_state = TimerState::Stopped;
+    return true;
 }
 
 void Timer::start() noexcept {
-    if (m_timer_state != TimerState::Running) {
-        m_timer_state = TimerState::Running;
-        m_last_time = std::chrono::steady_clock::now();
+    if (m_timer_state == TimerState::Running) {
+        return;
     }
+
+    m_timer_state = TimerState::Running;
+    m_last_time = clock::now();
 }
 
 void Timer::pause() noexcept {
@@ -55,35 +86,43 @@ void Timer::stop() noexcept {
 }
 
 void Timer::reset() noexcept {
-    switch (m_current_mode) {
-        case TimerMode::Pomodoro:
-            m_remaining_time = m_pomodoro_duration;
-            break;
-        case TimerMode::ShortBreak:
-            m_remaining_time = m_short_break_duration;
-            break;
-        case TimerMode::LongBreak:
-            m_remaining_time = m_long_break_duration;
-            break;
-    }
+    m_remaining_time = durationForMode(m_current_mode, m_pomodoro_duration, m_short_break_duration, m_long_break_duration);
 }
 
 void Timer::setMode(TimerMode mode) noexcept {
-    m_timer_state = TimerState::Stopped;
+    if (m_current_mode == mode) {
+        reset();
+        m_timer_state = TimerState::Stopped;
+        return;
+    }
+
     m_current_mode = mode;
+    m_timer_state = TimerState::Stopped;
     reset();
 }
 
 void Timer::setPomodoroDuration(int seconds) noexcept {
-    m_pomodoro_duration = seconds;
+    assignIfChanged(m_pomodoro_duration, seconds, [this] {
+        if (m_current_mode == TimerMode::Pomodoro) {
+            reset();
+        }
+    });
 }
 
 void Timer::setShortBreakDuration(int seconds) noexcept {
-    m_short_break_duration = seconds;
+    assignIfChanged(m_short_break_duration, seconds, [this] {
+        if (m_current_mode == TimerMode::ShortBreak) {
+            reset();
+        }
+    });
 }
 
 void Timer::setLongBreakDuration(int seconds) noexcept {
-    m_long_break_duration = seconds;
+    assignIfChanged(m_long_break_duration, seconds, [this] {
+        if (m_current_mode == TimerMode::LongBreak) {
+            reset();
+        }
+    });
 }
 
 int Timer::getPomodoroDuration() const noexcept {
