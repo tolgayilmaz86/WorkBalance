@@ -16,6 +16,7 @@
 #include <app/ui/MainWindowView.h>
 #include <app/ui/OverlayView.h>
 #include <core/Configuration.h>
+#include <core/Persistence.h>
 #include <core/Task.h>
 #include <core/Timer.h>
 #include <system/AudioManager.h>
@@ -66,6 +67,7 @@ class ScopedGLFWContext {
 class Application::Impl {
   public:
     Impl();
+    ~Impl();
     void run();
 
   private:
@@ -90,6 +92,8 @@ class Application::Impl {
     void toggleTaskCompletion(size_t index);
     void renderMainWindowFrame();
     void updateWindowTitle(int remaining_seconds);
+    void loadPersistedData();
+    void savePersistedData() const;
 
     template <typename Callback>
     void withAudio(Callback&& callback) {
@@ -111,6 +115,7 @@ class Application::Impl {
     std::unique_ptr<System::IAudioService> m_audio;
     Core::Timer m_timer;
     Core::TaskManager m_task_manager;
+    Core::PersistenceManager m_persistence;
     AppState m_state;
     UI::MainWindowView m_main_view;
     UI::OverlayView m_overlay_view;
@@ -121,6 +126,7 @@ Application::Impl::Impl()
       m_overlay_window(), m_audio(System::createAudioService()),
       m_timer(Core::Configuration::DEFAULT_POMODORO_DURATION, Core::Configuration::DEFAULT_SHORT_BREAK_DURATION,
               Core::Configuration::DEFAULT_LONG_BREAK_DURATION),
+      m_persistence(),
       m_main_view(
           m_window, m_imgui_layer, m_timer, m_task_manager, m_state,
           UI::MainWindowCallbacks{
@@ -136,10 +142,15 @@ Application::Impl::Impl()
                                       int completed) { updateTask(index, name, estimated, completed); },
               .onTaskCompletionToggled = [this](size_t index) { toggleTaskCompletion(index); }}),
       m_overlay_view(m_imgui_layer, m_timer, m_state) {
+    loadPersistedData();
     m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
     updatePomodoroCounters();
     updateWindowTitle(m_timer.getRemainingTime());
     setupCallbacks();
+}
+
+Application::Impl::~Impl() {
+    savePersistedData();
 }
 
 void Application::Impl::run() {
@@ -361,6 +372,69 @@ void Application::Impl::renderMainWindowFrame() {
 void Application::Impl::updateWindowTitle(int remaining_seconds) {
     std::string title = "Work Balance - " + WorkBalance::TimeFormatter::formatTime(remaining_seconds);
     glfwSetWindowTitle(m_window.get(), title.c_str());
+}
+
+void Application::Impl::loadPersistedData() {
+    auto loaded_data = m_persistence.load();
+    if (!loaded_data) {
+        return;
+    }
+
+    const auto& data = *loaded_data;
+
+    // Apply saved timer durations
+    m_timer.setPomodoroDuration(minutesToSeconds(data.settings.pomodoro_duration_minutes));
+    m_timer.setShortBreakDuration(minutesToSeconds(data.settings.short_break_duration_minutes));
+    m_timer.setLongBreakDuration(minutesToSeconds(data.settings.long_break_duration_minutes));
+    m_timer.reset();
+
+    // Update settings in UI state
+    m_state.temp_pomodoro_duration = data.settings.pomodoro_duration_minutes;
+    m_state.temp_short_break_duration = data.settings.short_break_duration_minutes;
+    m_state.temp_long_break_duration = data.settings.long_break_duration_minutes;
+
+    // Restore overlay position
+    m_state.overlay_position = ImVec2(data.settings.overlay_position_x, data.settings.overlay_position_y);
+
+    // Restore tasks
+    for (const auto& task : data.tasks) {
+        m_task_manager.addTask(task.name, task.estimated_pomodoros);
+        auto* added_task = m_task_manager.getTask(m_task_manager.getTaskCount() - 1);
+        if (added_task != nullptr) {
+            added_task->completed = task.completed;
+            added_task->completed_pomodoros = task.completed_pomodoros;
+        }
+    }
+
+    // Restore current task index
+    m_state.current_task_index = data.current_task_index;
+    adjustCurrentTaskIndex();
+}
+
+void Application::Impl::savePersistedData() const {
+    Core::PersistentData data;
+
+    // Save timer durations (convert seconds to minutes)
+    constexpr int seconds_per_minute = 60;
+    data.settings.pomodoro_duration_minutes = m_timer.getPomodoroDuration() / seconds_per_minute;
+    data.settings.short_break_duration_minutes = m_timer.getShortBreakDuration() / seconds_per_minute;
+    data.settings.long_break_duration_minutes = m_timer.getLongBreakDuration() / seconds_per_minute;
+
+    // Save overlay position
+    data.settings.overlay_position_x = m_state.overlay_position.x;
+    data.settings.overlay_position_y = m_state.overlay_position.y;
+
+    // Save tasks
+    const auto tasks = m_task_manager.getTasks();
+    data.tasks.reserve(tasks.size());
+    for (const auto& task : tasks) {
+        data.tasks.push_back(task);
+    }
+
+    // Save current task index
+    data.current_task_index = m_state.current_task_index;
+
+    [[maybe_unused]] const bool saved = m_persistence.save(data);
 }
 
 Application::Application() : m_impl(std::make_unique<Application::Impl>()) {

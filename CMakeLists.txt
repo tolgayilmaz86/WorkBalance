@@ -79,6 +79,7 @@ if(WIN32)
     main.cpp
     src/app/Application.cpp
     src/app/ImGuiLayer.cpp
+    src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp
     src/app/ui/MainWindowView.cpp
@@ -109,6 +110,7 @@ else()
     main.cpp
     src/app/Application.cpp
     src/app/ImGuiLayer.cpp
+    src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp
     src/app/ui/MainWindowView.cpp
