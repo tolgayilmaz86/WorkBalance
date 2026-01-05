@@ -89,6 +89,7 @@ if(WIN32)
     src/system/StbImage.cpp
     src/system/MiniaudioImplementation.cpp
     src/system/OverlayWindow.cpp
+    src/system/SystemTray.cpp
     src/system/WindowBase.cpp
         app.rc
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
@@ -120,6 +121,7 @@ else()
     src/system/StbImage.cpp
     src/system/MiniaudioImplementation.cpp
     src/system/OverlayWindow.cpp
+    src/system/SystemTray.cpp
     src/system/WindowBase.cpp
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp

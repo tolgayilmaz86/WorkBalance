@@ -22,6 +22,7 @@
 #include <system/AudioManager.h>
 #include <system/MainWindow.h>
 #include <system/OverlayWindow.h>
+#include <system/SystemTray.h>
 #include <system/WindowBase.h>
 #include <ui/AppState.h>
 
@@ -94,6 +95,9 @@ class Application::Impl {
     void updateWindowTitle(int remaining_seconds);
     void loadPersistedData();
     void savePersistedData() const;
+    void initializeSystemTray();
+    void updateSystemTrayState();
+    void showWindow();
 
     template <typename Callback>
     void withAudio(Callback&& callback) {
@@ -116,6 +120,7 @@ class Application::Impl {
     Core::Timer m_timer;
     Core::TaskManager m_task_manager;
     Core::PersistenceManager m_persistence;
+    System::SystemTray m_system_tray;
     AppState m_state;
     UI::MainWindowView m_main_view;
     UI::OverlayView m_overlay_view;
@@ -147,6 +152,7 @@ Application::Impl::Impl()
     updatePomodoroCounters();
     updateWindowTitle(m_timer.getRemainingTime());
     setupCallbacks();
+    initializeSystemTray();
 }
 
 Application::Impl::~Impl() {
@@ -169,7 +175,9 @@ void Application::Impl::run() {
         last_frame_time = current_time;
 
         glfwPollEvents();
+        m_system_tray.processMessages();
         updateTimer();
+        updateSystemTrayState();
 
         m_imgui_layer.newFrame();
         m_main_view.render();
@@ -370,8 +378,12 @@ void Application::Impl::renderMainWindowFrame() {
 }
 
 void Application::Impl::updateWindowTitle(int remaining_seconds) {
-    std::string title = "Work Balance - " + WorkBalance::TimeFormatter::formatTime(remaining_seconds);
+    std::string time_str = WorkBalance::TimeFormatter::formatTime(remaining_seconds);
+    std::string title = "Work Balance - " + time_str;
     glfwSetWindowTitle(m_window.get(), title.c_str());
+
+    // Update system tray tooltip
+    m_system_tray.setTooltip("WorkBalance - " + time_str);
 }
 
 void Application::Impl::loadPersistedData() {
@@ -435,6 +447,29 @@ void Application::Impl::savePersistedData() const {
     data.current_task_index = m_state.current_task_index;
 
     [[maybe_unused]] const bool saved = m_persistence.save(data);
+}
+
+void Application::Impl::initializeSystemTray() {
+    [[maybe_unused]] const bool initialized =
+        m_system_tray.initialize(System::SystemTrayCallbacks{.onToggleTimer = [this]() { toggleTimer(); },
+                                                             .onToggleOverlayMode = [this]() { toggleOverlayMode(); },
+                                                             .onShowWindow = [this]() { showWindow(); },
+                                                             .onQuit = [this]() { requestClose(); }});
+
+    // Set initial state
+    m_system_tray.updateTimerState(m_timer.isRunning());
+    m_system_tray.updateWindowMode(m_state.main_window_overlay_mode);
+    m_system_tray.setTooltip("WorkBalance - " + WorkBalance::TimeFormatter::formatTime(m_timer.getRemainingTime()));
+}
+
+void Application::Impl::updateSystemTrayState() {
+    m_system_tray.updateTimerState(m_timer.isRunning());
+    m_system_tray.updateWindowMode(m_state.main_window_overlay_mode);
+}
+
+void Application::Impl::showWindow() {
+    glfwShowWindow(m_window.get());
+    glfwFocusWindow(m_window.get());
 }
 
 Application::Application() : m_impl(std::make_unique<Application::Impl>()) {

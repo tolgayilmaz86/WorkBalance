@@ -237,9 +237,9 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 
 ## 🔮 Roadmap
 
-- [ ] Settings persistence
+- [X] Settings persistence
 - [ ] Statistics and analytics
-- [ ] System tray integration
+- [X] System tray integration
 - [ ] Multiple themes
 - [ ] Custom sound alerts
 - [ ] Task categories and tags
