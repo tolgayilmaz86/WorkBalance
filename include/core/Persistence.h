@@ -49,6 +49,13 @@ struct UserSettings {
     bool show_water_in_overlay = true;
     bool show_standup_in_overlay = true;
     bool show_eye_care_in_overlay = true;
+    // Wellness timer settings (in minutes)
+    int water_interval_minutes = 30;
+    int water_daily_goal = 8;
+    int standup_interval_minutes = 45;
+    int standup_duration_minutes = 5;
+    int eye_care_interval_minutes = 20;
+    int eye_care_break_seconds = 20;
 };
 
 /// @brief Persistent application data including tasks and settings

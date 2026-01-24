@@ -489,6 +489,27 @@ void Application::Impl::loadPersistedData() {
     m_state.show_standup_in_overlay = data.settings.show_standup_in_overlay;
     m_state.show_eye_care_in_overlay = data.settings.show_eye_care_in_overlay;
 
+    // Restore wellness timer settings
+    m_state.temp_water_interval = data.settings.water_interval_minutes;
+    m_state.temp_water_daily_goal = data.settings.water_daily_goal;
+    m_state.temp_standup_interval = data.settings.standup_interval_minutes;
+    m_state.temp_standup_duration = data.settings.standup_duration_minutes;
+    m_state.temp_eye_interval = data.settings.eye_care_interval_minutes;
+    m_state.temp_eye_break_duration = data.settings.eye_care_break_seconds;
+
+    // Apply wellness timer settings to the timers
+    if (m_water_timer) {
+        m_water_timer->setIntervalSeconds(data.settings.water_interval_minutes * 60);
+    }
+    if (m_standup_timer) {
+        m_standup_timer->setIntervalSeconds(data.settings.standup_interval_minutes * 60);
+        m_standup_timer->setBreakDurationSeconds(data.settings.standup_duration_minutes * 60);
+    }
+    if (m_eye_care_timer) {
+        m_eye_care_timer->setIntervalSeconds(data.settings.eye_care_interval_minutes * 60);
+        m_eye_care_timer->setBreakDurationSeconds(data.settings.eye_care_break_seconds);
+    }
+
     // Restore tasks
     for (const auto& task : data.tasks) {
         m_task_manager.addTask(task.name, task.estimated_pomodoros);
@@ -538,6 +559,14 @@ void Application::Impl::savePersistedData() const {
     data.settings.show_water_in_overlay = m_state.show_water_in_overlay;
     data.settings.show_standup_in_overlay = m_state.show_standup_in_overlay;
     data.settings.show_eye_care_in_overlay = m_state.show_eye_care_in_overlay;
+
+    // Save wellness timer settings
+    data.settings.water_interval_minutes = m_state.temp_water_interval;
+    data.settings.water_daily_goal = m_state.temp_water_daily_goal;
+    data.settings.standup_interval_minutes = m_state.temp_standup_interval;
+    data.settings.standup_duration_minutes = m_state.temp_standup_duration;
+    data.settings.eye_care_interval_minutes = m_state.temp_eye_interval;
+    data.settings.eye_care_break_seconds = m_state.temp_eye_break_duration;
 
     // Save tasks
     const auto tasks = m_task_manager.getTasks();
@@ -610,26 +639,28 @@ void Application::Impl::updateWellnessTimers() {
 }
 
 void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
-    withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
-
-    // For timers with breaks, the completion is handled differently
+    // Play type-specific completion sound
     switch (type) {
         case Core::WellnessType::Water:
+            withAudio([](System::IAudioService& audio) { audio.playHydrationSound(); });
             // Water reminder - just notify user
             break;
         case Core::WellnessType::Standup:
+            withAudio([](System::IAudioService& audio) { audio.playWalkSound(); });
             // If break completed, restart interval timer
             if (m_standup_timer && !m_standup_timer->isInBreak()) {
                 m_standup_timer->start();
             }
             break;
         case Core::WellnessType::EyeStrain:
+            withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
             // If break completed, restart interval timer
             if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {
                 m_eye_care_timer->start();
             }
             break;
         default:
+            withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
             break;
     }
 }

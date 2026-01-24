@@ -333,7 +333,13 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "show_pomodoro_in_overlay": {},
     "show_water_in_overlay": {},
     "show_standup_in_overlay": {},
-    "show_eye_care_in_overlay": {}
+    "show_eye_care_in_overlay": {},
+    "water_interval_minutes": {},
+    "water_daily_goal": {},
+    "standup_interval_minutes": {},
+    "standup_duration_minutes": {},
+    "eye_care_interval_minutes": {},
+    "eye_care_break_seconds": {}
   }},
   "current_task_index": {},
   "tasks": [
@@ -347,7 +353,10 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
         data.settings.show_pomodoro_in_overlay ? "true" : "false",
         data.settings.show_water_in_overlay ? "true" : "false",
         data.settings.show_standup_in_overlay ? "true" : "false",
-        data.settings.show_eye_care_in_overlay ? "true" : "false", data.current_task_index, tasks_json);
+        data.settings.show_eye_care_in_overlay ? "true" : "false", data.settings.water_interval_minutes,
+        data.settings.water_daily_goal, data.settings.standup_interval_minutes, data.settings.standup_duration_minutes,
+        data.settings.eye_care_interval_minutes, data.settings.eye_care_break_seconds, data.current_task_index,
+        tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {
@@ -376,6 +385,13 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
         data.settings.show_water_in_overlay = extractJsonBool(settings_json, "show_water_in_overlay", true);
         data.settings.show_standup_in_overlay = extractJsonBool(settings_json, "show_standup_in_overlay", true);
         data.settings.show_eye_care_in_overlay = extractJsonBool(settings_json, "show_eye_care_in_overlay", true);
+        // Wellness timer settings
+        data.settings.water_interval_minutes = extractJsonInt(settings_json, "water_interval_minutes", 30);
+        data.settings.water_daily_goal = extractJsonInt(settings_json, "water_daily_goal", 8);
+        data.settings.standup_interval_minutes = extractJsonInt(settings_json, "standup_interval_minutes", 45);
+        data.settings.standup_duration_minutes = extractJsonInt(settings_json, "standup_duration_minutes", 5);
+        data.settings.eye_care_interval_minutes = extractJsonInt(settings_json, "eye_care_interval_minutes", 20);
+        data.settings.eye_care_break_seconds = extractJsonInt(settings_json, "eye_care_break_seconds", 20);
     }
 
     // Extract current task index
