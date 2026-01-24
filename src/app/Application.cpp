@@ -154,7 +154,7 @@ class Application::Impl {
 
 Application::Impl::Impl()
     : m_window(getWindowWidth(), getWindowHeight(), Core::Configuration::WINDOW_TITLE), m_imgui_layer(m_window.get()),
-      m_overlay_window(m_window.get()), m_audio(System::createAudioService()),
+      m_overlay_window(), m_audio(System::createAudioService()),
       m_timer(Core::Configuration::DEFAULT_POMODORO_DURATION, Core::Configuration::DEFAULT_SHORT_BREAK_DURATION,
               Core::Configuration::DEFAULT_LONG_BREAK_DURATION),
       m_persistence(),
@@ -191,7 +191,6 @@ Application::Impl::Impl()
 
     // Set up wellness timers in the view
     m_main_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
-    m_overlay_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
     setupWellnessCallbacks();
 
     loadPersistedData();
@@ -255,15 +254,7 @@ void Application::Impl::renderOverlayFrame() {
 
     ScopedGLFWContext overlay_context(m_overlay_window.get());
 
-    // Update window size BEFORE starting ImGui frame - returns the target size
-    const auto [target_width, target_height] = m_overlay_view.updateWindowSize(m_overlay_window);
-
     m_imgui_layer.newFrame();
-
-    // Use the target size directly for ImGui (GLFW resize may be async on Windows)
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(static_cast<float>(target_width), static_cast<float>(target_height));
-    io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
     m_overlay_view.renderContent(m_overlay_window);
     m_overlay_view.renderFrame(m_overlay_window);
