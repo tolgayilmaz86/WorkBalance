@@ -101,6 +101,11 @@ struct AppState {
     bool show_water_in_overlay = true;
     bool show_standup_in_overlay = true;
     bool show_eye_care_in_overlay = true;
+
+    // ===== Wellness Auto-Loop Settings =====
+    bool water_auto_loop = false;
+    bool standup_auto_loop = false;
+    bool eye_care_auto_loop = false;
 };
 
 // Utility class for time formatting

@@ -510,6 +510,11 @@ void Application::Impl::loadPersistedData() {
         m_eye_care_timer->setBreakDurationSeconds(data.settings.eye_care_break_seconds);
     }
 
+    // Restore wellness auto-loop settings
+    m_state.water_auto_loop = data.settings.water_auto_loop;
+    m_state.standup_auto_loop = data.settings.standup_auto_loop;
+    m_state.eye_care_auto_loop = data.settings.eye_care_auto_loop;
+
     // Restore tasks
     for (const auto& task : data.tasks) {
         m_task_manager.addTask(task.name, task.estimated_pomodoros);
@@ -567,6 +572,11 @@ void Application::Impl::savePersistedData() const {
     data.settings.standup_duration_minutes = m_state.temp_standup_duration;
     data.settings.eye_care_interval_minutes = m_state.temp_eye_interval;
     data.settings.eye_care_break_seconds = m_state.temp_eye_break_duration;
+
+    // Save wellness auto-loop settings
+    data.settings.water_auto_loop = m_state.water_auto_loop;
+    data.settings.standup_auto_loop = m_state.standup_auto_loop;
+    data.settings.eye_care_auto_loop = m_state.eye_care_auto_loop;
 
     // Save tasks
     const auto tasks = m_task_manager.getTasks();
@@ -643,7 +653,12 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
     switch (type) {
         case Core::WellnessType::Water:
             withAudio([](System::IAudioService& audio) { audio.playHydrationSound(); });
-            // Water reminder - just notify user
+            // Auto-restart if loop is enabled
+            if (m_state.water_auto_loop && m_water_timer) {
+                m_water_timer->acknowledgeReminder();
+                m_water_timer->reset();
+                m_water_timer->start();
+            }
             break;
         case Core::WellnessType::Standup:
             withAudio([](System::IAudioService& audio) { audio.playWalkSound(); });

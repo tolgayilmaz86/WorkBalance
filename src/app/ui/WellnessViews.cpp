@@ -197,6 +197,15 @@ void WaterReminderView::render() {
     }
     endTimerFrame();
 
+    // Auto-loop checkbox below the frame
+    ImGui::Spacing();
+    {
+        const float window_width = ImGui::GetWindowSize().x;
+        const float checkbox_width = 130.0f;
+        ImGui::SetCursorPosX((window_width - checkbox_width) * 0.5f);
+        ImGui::Checkbox("Auto restart", &m_state.water_auto_loop);
+    }
+
     // Goal tracker below the frame
     ImGui::Spacing();
     renderGoalTracker();
@@ -266,8 +275,8 @@ void WaterReminderView::renderControls() {
     const ImVec4 water_color = Core::WellnessDefaults::WATER_BG_COLOR;
 
     if (m_timer.isReminderActive()) {
-        // Show acknowledge button
-        if (renderStyledButton("I DRANK WATER", button_size, water_color, false, m_imgui.buttonFont())) {
+        // Show acknowledge button to restart timer
+        if (renderStyledButton("START", button_size, water_color, false, m_imgui.buttonFont())) {
             if (m_callbacks.onAcknowledge) {
                 m_callbacks.onAcknowledge();
             }
@@ -320,6 +329,15 @@ void StandupReminderView::render() {
         renderControls();
     }
     endTimerFrame();
+
+    // Auto-loop checkbox below the frame
+    ImGui::Spacing();
+    {
+        const float window_width = ImGui::GetWindowSize().x;
+        const float checkbox_width = 130.0f;
+        ImGui::SetCursorPosX((window_width - checkbox_width) * 0.5f);
+        ImGui::Checkbox("Auto-restart", &m_state.standup_auto_loop);
+    }
 
     // Stats below the frame
     ImGui::Spacing();
@@ -457,6 +475,15 @@ void EyeCareReminderView::render() {
         renderControls();
     }
     endTimerFrame();
+
+    // Auto-loop checkbox below the frame
+    ImGui::Spacing();
+    {
+        const float window_width = ImGui::GetWindowSize().x;
+        const float checkbox_width = 130.0f;
+        ImGui::SetCursorPosX((window_width - checkbox_width) * 0.5f);
+        ImGui::Checkbox("Auto-restart", &m_state.eye_care_auto_loop);
+    }
 
     // Stats and tips below the frame
     ImGui::Spacing();

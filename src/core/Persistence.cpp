@@ -339,7 +339,10 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "standup_interval_minutes": {},
     "standup_duration_minutes": {},
     "eye_care_interval_minutes": {},
-    "eye_care_break_seconds": {}
+    "eye_care_break_seconds": {},
+    "water_auto_loop": {},
+    "standup_auto_loop": {},
+    "eye_care_auto_loop": {}
   }},
   "current_task_index": {},
   "tasks": [
@@ -355,8 +358,9 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
         data.settings.show_standup_in_overlay ? "true" : "false",
         data.settings.show_eye_care_in_overlay ? "true" : "false", data.settings.water_interval_minutes,
         data.settings.water_daily_goal, data.settings.standup_interval_minutes, data.settings.standup_duration_minutes,
-        data.settings.eye_care_interval_minutes, data.settings.eye_care_break_seconds, data.current_task_index,
-        tasks_json);
+        data.settings.eye_care_interval_minutes, data.settings.eye_care_break_seconds,
+        data.settings.water_auto_loop ? "true" : "false", data.settings.standup_auto_loop ? "true" : "false",
+        data.settings.eye_care_auto_loop ? "true" : "false", data.current_task_index, tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {
@@ -392,6 +396,10 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
         data.settings.standup_duration_minutes = extractJsonInt(settings_json, "standup_duration_minutes", 5);
         data.settings.eye_care_interval_minutes = extractJsonInt(settings_json, "eye_care_interval_minutes", 20);
         data.settings.eye_care_break_seconds = extractJsonInt(settings_json, "eye_care_break_seconds", 20);
+        // Wellness auto-loop settings
+        data.settings.water_auto_loop = extractJsonBool(settings_json, "water_auto_loop", false);
+        data.settings.standup_auto_loop = extractJsonBool(settings_json, "standup_auto_loop", false);
+        data.settings.eye_care_auto_loop = extractJsonBool(settings_json, "eye_care_auto_loop", false);
     }
 
     // Extract current task index

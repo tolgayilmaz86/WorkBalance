@@ -56,6 +56,10 @@ struct UserSettings {
     int standup_duration_minutes = 5;
     int eye_care_interval_minutes = 20;
     int eye_care_break_seconds = 20;
+    // Wellness auto-loop settings
+    bool water_auto_loop = false;
+    bool standup_auto_loop = false;
+    bool eye_care_auto_loop = false;
 };
 
 /// @brief Persistent application data including tasks and settings
