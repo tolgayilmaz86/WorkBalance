@@ -11,6 +11,7 @@ WellnessController::WellnessController(std::unique_ptr<Core::WellnessTimer> wate
                                        std::unique_ptr<Core::WellnessTimer> eye_care, System::IAudioService* audio)
     : m_water_timer(std::move(water)), m_standup_timer(std::move(standup)), m_eye_care_timer(std::move(eye_care)),
       m_audio(audio) {
+    updateCounters();
 }
 
 void WellnessController::update() {
@@ -49,9 +50,7 @@ void WellnessController::handleTimerComplete(Core::WellnessType type) {
             break;
     }
 
-    if (onTimerComplete) {
-        onTimerComplete(type);
-    }
+    onTimerComplete.emit(type);
 }
 
 // Water timer controls
@@ -66,9 +65,7 @@ void WellnessController::acknowledgeWater() {
     if (m_water_timer) {
         playClickSound();
         m_water_timer->acknowledgeReminder();
-        if (onCountersChanged) {
-            onCountersChanged();
-        }
+        updateCounters();
     }
 }
 
@@ -76,9 +73,7 @@ void WellnessController::resetWaterDaily() {
     if (m_water_timer) {
         m_water_timer->resetDailyCounters();
         m_water_timer->reset();
-        if (onCountersChanged) {
-            onCountersChanged();
-        }
+        updateCounters();
     }
 }
 
@@ -103,6 +98,7 @@ void WellnessController::startStandupBreak() {
     if (m_standup_timer) {
         playClickSound();
         m_standup_timer->startBreak();
+        onBreakStarted.emit(Core::WellnessType::Standup);
     }
 }
 
@@ -110,9 +106,8 @@ void WellnessController::endStandupBreak() {
     if (m_standup_timer) {
         playClickSound();
         m_standup_timer->endBreak();
-        if (onCountersChanged) {
-            onCountersChanged();
-        }
+        updateCounters();
+        onBreakEnded.emit(Core::WellnessType::Standup);
     }
 }
 
@@ -137,6 +132,7 @@ void WellnessController::startEyeCareBreak() {
     if (m_eye_care_timer) {
         playClickSound();
         m_eye_care_timer->startBreak();
+        onBreakStarted.emit(Core::WellnessType::EyeStrain);
     }
 }
 
@@ -144,24 +140,13 @@ void WellnessController::endEyeCareBreak() {
     if (m_eye_care_timer) {
         playClickSound();
         m_eye_care_timer->endBreak();
-        if (onCountersChanged) {
-            onCountersChanged();
-        }
+        updateCounters();
+        onBreakEnded.emit(Core::WellnessType::EyeStrain);
     }
 }
 
 WellnessCounters WellnessController::getCounters() const {
-    WellnessCounters counters;
-    if (m_water_timer) {
-        counters.water_glasses = m_water_timer->getCompletedCount();
-    }
-    if (m_standup_timer) {
-        counters.standups_completed = m_standup_timer->getCompletedCount();
-    }
-    if (m_eye_care_timer) {
-        counters.eye_breaks_completed = m_eye_care_timer->getCompletedCount();
-    }
-    return counters;
+    return counters.get();
 }
 
 void WellnessController::applySettings(int water_interval_mins, int water_goal, int standup_interval_mins,
@@ -192,6 +177,20 @@ void WellnessController::playBellSound() {
     if (m_audio && m_audio->isInitialized()) {
         m_audio->playBellSound();
     }
+}
+
+void WellnessController::updateCounters() {
+    WellnessCounters new_counters;
+    if (m_water_timer) {
+        new_counters.water_glasses = m_water_timer->getCompletedCount();
+    }
+    if (m_standup_timer) {
+        new_counters.standups_completed = m_standup_timer->getCompletedCount();
+    }
+    if (m_eye_care_timer) {
+        new_counters.eye_breaks_completed = m_eye_care_timer->getCompletedCount();
+    }
+    counters.set(new_counters);
 }
 
 } // namespace WorkBalance::Controllers

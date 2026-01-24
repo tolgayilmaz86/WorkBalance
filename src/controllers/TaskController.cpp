@@ -3,6 +3,7 @@
 namespace WorkBalance::Controllers {
 
 TaskController::TaskController(Core::TaskManager& manager) : m_manager(manager) {
+    updateCounters();
 }
 
 void TaskController::add(std::string_view name, int estimated_pomodoros) {
@@ -47,14 +48,17 @@ bool TaskController::isValidIndex(size_t index) const noexcept {
 }
 
 PomodoroCounters TaskController::getCounters() const {
-    return PomodoroCounters{.target_pomodoros = m_manager.getTargetPomodoros(),
-                            .completed_pomodoros = m_manager.getCompletedPomodoros()};
+    return counters.get();
 }
 
 void TaskController::notifyTasksChanged() {
-    if (onTasksChanged) {
-        onTasksChanged();
-    }
+    updateCounters();
+    onTasksChanged.emit();
+}
+
+void TaskController::updateCounters() {
+    counters.set(PomodoroCounters{.target_pomodoros = m_manager.getTargetPomodoros(),
+                                  .completed_pomodoros = m_manager.getCompletedPomodoros()});
 }
 
 } // namespace WorkBalance::Controllers

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <core/Event.h>
+#include <core/Observable.h>
 #include <core/Task.h>
 
-#include <functional>
 #include <string_view>
 
 namespace WorkBalance::Controllers {
@@ -11,6 +12,9 @@ namespace WorkBalance::Controllers {
 struct PomodoroCounters {
     int target_pomodoros = 0;
     int completed_pomodoros = 0;
+
+    bool operator==(const PomodoroCounters&) const = default;
+    bool operator!=(const PomodoroCounters&) const = default;
 };
 
 /// @brief Controller for managing task operations
@@ -46,14 +50,19 @@ class TaskController {
         return m_manager;
     }
 
-    /// @brief Get current pomodoro counters
+    /// @brief Get current pomodoro counters (convenience accessor)
     [[nodiscard]] PomodoroCounters getCounters() const;
 
-    // Event callbacks
-    std::function<void()> onTasksChanged;
+    /// @brief Observable pomodoro counters - observe for automatic updates
+    /// @note Prefer observing this over polling getCounters()
+    Core::Observable<PomodoroCounters> counters{};
+
+    // Events - subscribe to be notified of task changes
+    Core::Event<> onTasksChanged;
 
   private:
     void notifyTasksChanged();
+    void updateCounters();
 
     Core::TaskManager& m_manager;
 };

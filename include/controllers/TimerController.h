@@ -1,9 +1,8 @@
 #pragma once
 
+#include <core/Event.h>
 #include <core/Timer.h>
 #include <system/IAudioService.h>
-
-#include <functional>
 
 namespace WorkBalance::Controllers {
 
@@ -39,10 +38,10 @@ class TimerController {
     /// @brief Apply new timer durations
     void applyDurations(int pomodoro_minutes, int short_break_minutes, int long_break_minutes);
 
-    // Event callbacks - set these to be notified of timer events
-    std::function<void(Core::TimerMode)> onModeChanged;
-    std::function<void(int)> onTick;  // Called when remaining time changes (parameter: remaining seconds)
-    std::function<void()> onComplete; // Called when timer completes
+    // Events - subscribe to be notified of timer events
+    Core::Event<Core::TimerMode> onModeChanged;
+    Core::Event<int> onTick;  // Emitted when remaining time changes (parameter: remaining seconds)
+    Core::Event<> onComplete; // Emitted when timer completes
 
   private:
     void playClickSound();

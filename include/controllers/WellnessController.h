@@ -1,10 +1,11 @@
 #pragma once
 
+#include <core/Event.h>
+#include <core/Observable.h>
 #include <core/WellnessTimer.h>
 #include <core/WellnessTypes.h>
 #include <system/IAudioService.h>
 
-#include <functional>
 #include <memory>
 
 namespace WorkBalance::Controllers {
@@ -14,6 +15,9 @@ struct WellnessCounters {
     int water_glasses = 0;
     int standups_completed = 0;
     int eye_breaks_completed = 0;
+
+    bool operator==(const WellnessCounters&) const = default;
+    bool operator!=(const WellnessCounters&) const = default;
 };
 
 /// @brief Controller for managing all wellness timers (water, standup, eye care)
@@ -43,7 +47,7 @@ class WellnessController {
     void startEyeCareBreak();
     void endEyeCareBreak();
 
-    /// @brief Get current wellness counters
+    /// @brief Get current wellness counters (convenience accessor)
     [[nodiscard]] WellnessCounters getCounters() const;
 
     /// @brief Apply wellness settings
@@ -61,14 +65,19 @@ class WellnessController {
         return m_eye_care_timer.get();
     }
 
-    // Event callbacks
-    std::function<void(Core::WellnessType)> onTimerComplete;
-    std::function<void()> onCountersChanged;
+    // Events - subscribe to be notified
+    Core::Event<Core::WellnessType> onTimerComplete;
+    Core::Event<Core::WellnessType> onBreakStarted;
+    Core::Event<Core::WellnessType> onBreakEnded;
+
+    /// @brief Observable wellness counters - observe for automatic updates
+    Core::Observable<WellnessCounters> counters{};
 
   private:
     void handleTimerComplete(Core::WellnessType type);
     void playClickSound();
     void playBellSound();
+    void updateCounters();
 
     std::unique_ptr<Core::WellnessTimer> m_water_timer;
     std::unique_ptr<Core::WellnessTimer> m_standup_timer;

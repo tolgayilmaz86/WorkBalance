@@ -18,17 +18,13 @@ void TimerController::toggle() {
 void TimerController::reset() {
     m_timer.reset();
     m_last_remaining_time = m_timer.getRemainingTime();
-    if (onTick) {
-        onTick(m_last_remaining_time);
-    }
+    onTick.emit(m_last_remaining_time);
 }
 
 void TimerController::setMode(Core::TimerMode mode) {
     m_timer.setMode(mode);
     reset();
-    if (onModeChanged) {
-        onModeChanged(mode);
-    }
+    onModeChanged.emit(mode);
 }
 
 bool TimerController::update() {
@@ -37,18 +33,14 @@ bool TimerController::update() {
     // Check for tick (time changed)
     if (current_remaining != m_last_remaining_time) {
         m_last_remaining_time = current_remaining;
-        if (onTick) {
-            onTick(current_remaining);
-        }
+        onTick.emit(current_remaining);
     }
 
     // Update timer and check for completion
     if (m_timer.update()) {
         // Timer just completed
         playBellSound();
-        if (onComplete) {
-            onComplete();
-        }
+        onComplete.emit();
         return true;
     }
 
@@ -56,9 +48,7 @@ bool TimerController::update() {
     if (current_remaining <= 0 && m_timer.isRunning()) {
         m_timer.stop();
         playBellSound();
-        if (onComplete) {
-            onComplete();
-        }
+        onComplete.emit();
         return true;
     }
 

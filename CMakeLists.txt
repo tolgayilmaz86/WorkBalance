@@ -235,8 +235,10 @@ if(BUILD_TESTS)
         tests/ObservableTest.cpp
         tests/TimerTest.cpp
         tests/TaskTest.cpp
+        tests/TaskControllerTest.cpp
         src/core/Timer.cpp
         src/core/Task.cpp
+        src/controllers/TaskController.cpp
     )
 
     target_include_directories(WorkBalanceTests PRIVATE
