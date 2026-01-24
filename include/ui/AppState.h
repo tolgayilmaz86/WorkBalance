@@ -44,6 +44,10 @@ struct AppState {
     ImVec2 overlay_drag_offset{0.0f, 0.0f};
     ImVec2 overlay_position{100.0f, 100.0f};
 
+    // Main window position (-1 means use default/centered)
+    int main_window_x = -1;
+    int main_window_y = -1;
+
     // Task editing state
     int edit_task_index = -1;
     char edit_task_name[256] = "";

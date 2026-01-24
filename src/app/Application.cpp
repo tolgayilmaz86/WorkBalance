@@ -101,6 +101,7 @@ class Application::Impl {
     void renderMainWindowFrame();
     void updateWindowTitle(int remaining_seconds);
     void loadPersistedData();
+    void applyPersistedWindowPositions();
     void savePersistedData() const;
     void initializeSystemTray();
     void updateSystemTrayState();
@@ -195,6 +196,7 @@ Application::Impl::Impl()
     setupWellnessCallbacks();
 
     loadPersistedData();
+    applyPersistedWindowPositions();
     m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
     updatePomodoroCounters();
     updateWellnessCounters();
@@ -477,6 +479,16 @@ void Application::Impl::loadPersistedData() {
     // Restore overlay position
     m_state.overlay_position = ImVec2(data.settings.overlay_position_x, data.settings.overlay_position_y);
 
+    // Restore main window position
+    m_state.main_window_x = data.settings.main_window_x;
+    m_state.main_window_y = data.settings.main_window_y;
+
+    // Restore overlay visibility settings
+    m_state.show_pomodoro_in_overlay = data.settings.show_pomodoro_in_overlay;
+    m_state.show_water_in_overlay = data.settings.show_water_in_overlay;
+    m_state.show_standup_in_overlay = data.settings.show_standup_in_overlay;
+    m_state.show_eye_care_in_overlay = data.settings.show_eye_care_in_overlay;
+
     // Restore tasks
     for (const auto& task : data.tasks) {
         m_task_manager.addTask(task.name, task.estimated_pomodoros);
@@ -492,6 +504,17 @@ void Application::Impl::loadPersistedData() {
     adjustCurrentTaskIndex();
 }
 
+void Application::Impl::applyPersistedWindowPositions() {
+    // Apply main window position if it was saved (not default -1)
+    if (m_state.main_window_x >= 0 && m_state.main_window_y >= 0) {
+        m_window.setPosition(m_state.main_window_x, m_state.main_window_y);
+    }
+
+    // Apply overlay window position
+    m_overlay_window.setPosition(static_cast<int>(m_state.overlay_position.x),
+                                 static_cast<int>(m_state.overlay_position.y));
+}
+
 void Application::Impl::savePersistedData() const {
     Core::PersistentData data;
 
@@ -504,6 +527,17 @@ void Application::Impl::savePersistedData() const {
     // Save overlay position
     data.settings.overlay_position_x = m_state.overlay_position.x;
     data.settings.overlay_position_y = m_state.overlay_position.y;
+
+    // Save main window position (get current position from window)
+    const auto [win_x, win_y] = m_window.getPosition();
+    data.settings.main_window_x = win_x;
+    data.settings.main_window_y = win_y;
+
+    // Save overlay visibility settings
+    data.settings.show_pomodoro_in_overlay = m_state.show_pomodoro_in_overlay;
+    data.settings.show_water_in_overlay = m_state.show_water_in_overlay;
+    data.settings.show_standup_in_overlay = m_state.show_standup_in_overlay;
+    data.settings.show_eye_care_in_overlay = m_state.show_eye_care_in_overlay;
 
     // Save tasks
     const auto tasks = m_task_manager.getTasks();

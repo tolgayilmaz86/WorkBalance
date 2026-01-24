@@ -16,8 +16,16 @@ struct UserSettings {
     int long_break_duration_minutes = 15;
     bool auto_start_breaks = false;
     bool auto_start_pomodoros = false;
+    // Window positions
     float overlay_position_x = 100.0f;
     float overlay_position_y = 100.0f;
+    int main_window_x = -1; // -1 means use default (centered)
+    int main_window_y = -1;
+    // Overlay visibility settings
+    bool show_pomodoro_in_overlay = true;
+    bool show_water_in_overlay = true;
+    bool show_standup_in_overlay = true;
+    bool show_eye_care_in_overlay = true;
 };
 
 /// @brief Persistent application data including tasks and settings

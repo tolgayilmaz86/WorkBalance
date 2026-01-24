@@ -300,7 +300,14 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     json << "    \"auto_start_breaks\": " << (data.settings.auto_start_breaks ? "true" : "false") << ",\n";
     json << "    \"auto_start_pomodoros\": " << (data.settings.auto_start_pomodoros ? "true" : "false") << ",\n";
     json << "    \"overlay_position_x\": " << data.settings.overlay_position_x << ",\n";
-    json << "    \"overlay_position_y\": " << data.settings.overlay_position_y << "\n";
+    json << "    \"overlay_position_y\": " << data.settings.overlay_position_y << ",\n";
+    json << "    \"main_window_x\": " << data.settings.main_window_x << ",\n";
+    json << "    \"main_window_y\": " << data.settings.main_window_y << ",\n";
+    json << "    \"show_pomodoro_in_overlay\": " << (data.settings.show_pomodoro_in_overlay ? "true" : "false")
+         << ",\n";
+    json << "    \"show_water_in_overlay\": " << (data.settings.show_water_in_overlay ? "true" : "false") << ",\n";
+    json << "    \"show_standup_in_overlay\": " << (data.settings.show_standup_in_overlay ? "true" : "false") << ",\n";
+    json << "    \"show_eye_care_in_overlay\": " << (data.settings.show_eye_care_in_overlay ? "true" : "false") << "\n";
     json << "  },\n";
 
     // Current task index
@@ -340,6 +347,12 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
         data.settings.auto_start_pomodoros = extractJsonBool(settings_json, "auto_start_pomodoros", false);
         data.settings.overlay_position_x = extractJsonFloat(settings_json, "overlay_position_x", 100.0f);
         data.settings.overlay_position_y = extractJsonFloat(settings_json, "overlay_position_y", 100.0f);
+        data.settings.main_window_x = extractJsonInt(settings_json, "main_window_x", -1);
+        data.settings.main_window_y = extractJsonInt(settings_json, "main_window_y", -1);
+        data.settings.show_pomodoro_in_overlay = extractJsonBool(settings_json, "show_pomodoro_in_overlay", true);
+        data.settings.show_water_in_overlay = extractJsonBool(settings_json, "show_water_in_overlay", true);
+        data.settings.show_standup_in_overlay = extractJsonBool(settings_json, "show_standup_in_overlay", true);
+        data.settings.show_eye_care_in_overlay = extractJsonBool(settings_json, "show_eye_care_in_overlay", true);
     }
 
     // Extract current task index
