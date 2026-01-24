@@ -188,9 +188,36 @@ void MainWindow::setOverlayMode(bool overlay_mode) {
     const MonitorData monitor = monitorOrDefault(queryPrimaryMonitor());
 
     if (overlay_mode) {
-        applyOverlaySize(m_window, monitor);
+        // Save current normal position before switching to overlay
+        glfwGetWindowPos(m_window, &m_saved_normal_x, &m_saved_normal_y);
+
+        // Set overlay size
+        constexpr int overlay_width = 620;
+        constexpr int overlay_height = 70;
+        sizeWindow(m_window, overlay_width, overlay_height);
+
+        // Restore saved overlay position if we have one, otherwise center at top
+        if (m_saved_overlay_x >= 0 && m_saved_overlay_y >= 0) {
+            positionWindow(m_window, m_saved_overlay_x, m_saved_overlay_y);
+        } else if (monitor.valid()) {
+            const int window_x = monitor.x + ((monitor.mode->width - overlay_width) / 2);
+            const int window_y = monitor.y + 10;
+            positionWindow(m_window, window_x, window_y);
+        }
     } else {
-        applyNormalSize(m_window, monitor);
+        // Save current overlay position before switching to normal
+        glfwGetWindowPos(m_window, &m_saved_overlay_x, &m_saved_overlay_y);
+
+        // Restore to normal size
+        const int height = calculateWindowHeight(monitor);
+        sizeWindow(m_window, Core::Configuration::DEFAULT_WINDOW_WIDTH, height);
+
+        // Restore saved position if we have one, otherwise center
+        if (m_saved_normal_x >= 0 && m_saved_normal_y >= 0) {
+            positionWindow(m_window, m_saved_normal_x, m_saved_normal_y);
+        } else {
+            applyNormalSize(m_window, monitor);
+        }
     }
 }
 

@@ -26,6 +26,12 @@ class MainWindow final : public WindowBase {
     void resizeForOverlay() const;
     void resizeForNormal() const;
     [[nodiscard]] int getFullHeight() const;
+
+    // Saved position for restoring after overlay mode
+    int m_saved_normal_x = -1;
+    int m_saved_normal_y = -1;
+    int m_saved_overlay_x = -1;
+    int m_saved_overlay_y = -1;
 };
 
 } // namespace WorkBalance::System
