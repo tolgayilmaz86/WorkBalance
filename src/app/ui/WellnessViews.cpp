@@ -3,6 +3,7 @@
 #include "assets/fonts/IconsFontAwesome5Pro.h"
 
 #include <cmath>
+#include <format>
 #include <string>
 
 #ifndef M_PI
@@ -16,11 +17,7 @@ namespace {
 [[nodiscard]] std::string formatTime(int total_seconds) {
     if (total_seconds < 0)
         total_seconds = 0;
-    const int minutes = total_seconds / 60;
-    const int seconds = total_seconds % 60;
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%d:%02d", minutes, seconds);
-    return buffer;
+    return std::format("{}:{:02}", total_seconds / 60, total_seconds % 60);
 }
 
 // Helper to render centered text
@@ -241,9 +238,8 @@ void WaterReminderView::renderGoalTracker() {
     const int goal = m_state.water_daily_goal;
 
     // Goal text
-    char goal_text[64];
-    snprintf(goal_text, sizeof(goal_text), "%d / %d glasses today", completed, goal);
-    renderCenteredText(goal_text);
+    const std::string goal_text = std::format("{} / {} glasses today", completed, goal);
+    renderCenteredText(goal_text.c_str());
 
     ImGui::Spacing();
 
@@ -391,9 +387,8 @@ void StandupReminderView::renderBreakMode() {
 }
 
 void StandupReminderView::renderStats() {
-    char stats_text[64];
-    snprintf(stats_text, sizeof(stats_text), "%d stand-up breaks today", m_timer.getCompletedCount());
-    renderCenteredText(stats_text);
+    const std::string stats_text = std::format("{} stand-up breaks today", m_timer.getCompletedCount());
+    renderCenteredText(stats_text.c_str());
 }
 
 void StandupReminderView::renderControls() {
@@ -532,9 +527,8 @@ void EyeCareReminderView::renderBreakMode() {
 }
 
 void EyeCareReminderView::renderStats() {
-    char stats_text[64];
-    snprintf(stats_text, sizeof(stats_text), "%d eye breaks today", m_timer.getCompletedCount());
-    renderCenteredText(stats_text);
+    const std::string stats_text = std::format("{} eye breaks today", m_timer.getCompletedCount());
+    renderCenteredText(stats_text.c_str());
 }
 
 void EyeCareReminderView::renderTip() {

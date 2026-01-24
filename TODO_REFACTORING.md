@@ -1222,10 +1222,10 @@ pomodoro_count.observe([](int old_count, int new_count) {
 - [x] Split `AppState` into focused structs
 
 ### Phase 4: Modernization (Week 7-8)
-- [ ] Convert to `std::format` for string formatting
-- [ ] Apply `std::ranges` where beneficial
-- [ ] Use `std::flat_map` for small collections
-- [ ] Replace C-arrays with std::string
+- [x] Convert to `std::format` for string formatting
+- [x] Apply `std::ranges` where beneficial
+- [x] Use `std::flat_map` for small collections
+- [x] Replace C-arrays with std::string
 
 ### Phase 5: Architecture (Week 9-10)
 - [ ] Implement Event system

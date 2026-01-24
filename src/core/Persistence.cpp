@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -301,49 +302,52 @@ bool PersistenceManager::hasSavedData() const {
 }
 
 std::string PersistenceManager::serializeToJson(const PersistentData& data) {
-    std::ostringstream json;
-    json << "{\n";
-
-    // Settings section
-    json << "  \"settings\": {\n";
-    json << "    \"pomodoro_duration_minutes\": " << data.settings.pomodoro_duration_minutes << ",\n";
-    json << "    \"short_break_duration_minutes\": " << data.settings.short_break_duration_minutes << ",\n";
-    json << "    \"long_break_duration_minutes\": " << data.settings.long_break_duration_minutes << ",\n";
-    json << "    \"auto_start_breaks\": " << (data.settings.auto_start_breaks ? "true" : "false") << ",\n";
-    json << "    \"auto_start_pomodoros\": " << (data.settings.auto_start_pomodoros ? "true" : "false") << ",\n";
-    json << "    \"overlay_position_x\": " << data.settings.overlay_position_x << ",\n";
-    json << "    \"overlay_position_y\": " << data.settings.overlay_position_y << ",\n";
-    json << "    \"main_window_x\": " << data.settings.main_window_x << ",\n";
-    json << "    \"main_window_y\": " << data.settings.main_window_y << ",\n";
-    json << "    \"show_pomodoro_in_overlay\": " << (data.settings.show_pomodoro_in_overlay ? "true" : "false")
-         << ",\n";
-    json << "    \"show_water_in_overlay\": " << (data.settings.show_water_in_overlay ? "true" : "false") << ",\n";
-    json << "    \"show_standup_in_overlay\": " << (data.settings.show_standup_in_overlay ? "true" : "false") << ",\n";
-    json << "    \"show_eye_care_in_overlay\": " << (data.settings.show_eye_care_in_overlay ? "true" : "false") << "\n";
-    json << "  },\n";
-
-    // Current task index
-    json << "  \"current_task_index\": " << data.current_task_index << ",\n";
-
-    // Tasks array
-    json << "  \"tasks\": [\n";
+    // Format tasks array
+    std::string tasks_json;
     for (size_t i = 0; i < data.tasks.size(); ++i) {
         const auto& task = data.tasks[i];
-        json << "    {\n";
-        json << "      \"name\": \"" << escapeJsonString(task.name) << "\",\n";
-        json << "      \"completed\": " << (task.completed ? "true" : "false") << ",\n";
-        json << "      \"estimated_pomodoros\": " << task.estimated_pomodoros << ",\n";
-        json << "      \"completed_pomodoros\": " << task.completed_pomodoros << "\n";
-        json << "    }";
-        if (i < data.tasks.size() - 1) {
-            json << ",";
-        }
-        json << "\n";
+        tasks_json += std::format(
+            R"(    {{
+      "name": "{}",
+      "completed": {},
+      "estimated_pomodoros": {},
+      "completed_pomodoros": {}
+    }}{}
+)",
+            escapeJsonString(task.name), task.completed ? "true" : "false", task.estimated_pomodoros,
+            task.completed_pomodoros, (i < data.tasks.size() - 1) ? "," : "");
     }
-    json << "  ]\n";
 
-    json << "}\n";
-    return json.str();
+    return std::format(
+        R"({{
+  "settings": {{
+    "pomodoro_duration_minutes": {},
+    "short_break_duration_minutes": {},
+    "long_break_duration_minutes": {},
+    "auto_start_breaks": {},
+    "auto_start_pomodoros": {},
+    "overlay_position_x": {},
+    "overlay_position_y": {},
+    "main_window_x": {},
+    "main_window_y": {},
+    "show_pomodoro_in_overlay": {},
+    "show_water_in_overlay": {},
+    "show_standup_in_overlay": {},
+    "show_eye_care_in_overlay": {}
+  }},
+  "current_task_index": {},
+  "tasks": [
+{}  ]
+}}
+)",
+        data.settings.pomodoro_duration_minutes, data.settings.short_break_duration_minutes,
+        data.settings.long_break_duration_minutes, data.settings.auto_start_breaks ? "true" : "false",
+        data.settings.auto_start_pomodoros ? "true" : "false", data.settings.overlay_position_x,
+        data.settings.overlay_position_y, data.settings.main_window_x, data.settings.main_window_y,
+        data.settings.show_pomodoro_in_overlay ? "true" : "false",
+        data.settings.show_water_in_overlay ? "true" : "false",
+        data.settings.show_standup_in_overlay ? "true" : "false",
+        data.settings.show_eye_care_in_overlay ? "true" : "false", data.current_task_index, tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {

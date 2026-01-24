@@ -9,8 +9,9 @@
 #include <imgui.h>
 #include <memory>
 #include <string>
-#include <sstream>
-#include <iomanip>
+#include <format>
+#include <array>
+#include <utility>
 
 namespace WorkBalance {
 
@@ -60,7 +61,7 @@ struct AppState {
 
     // ===== Task Editing State =====
     int edit_task_index = -1;
-    char edit_task_name[Core::Configuration::MAX_TASK_NAME_LENGTH] = "";
+    std::array<char, Core::Configuration::MAX_TASK_NAME_LENGTH> edit_task_name{};
     int edit_task_estimated_pomodoros = Core::Configuration::DEFAULT_ESTIMATED_POMODOROS;
     int edit_task_completed_pomodoros = Core::Configuration::DEFAULT_COMPLETED_POMODOROS;
 
@@ -109,19 +110,7 @@ class TimeFormatter {
         if (seconds < 0)
             seconds = 0;
 
-        int minutes = seconds / 60;
-        int secs = seconds % 60;
-
-        std::stringstream ss;
-        ss << minutes << ":" << std::setfill('0') << std::setw(2) << secs;
-        std::string result = ss.str();
-
-        // Fallback if colon is missing (locale issues)
-        if (result.find(':') == std::string::npos) {
-            result = std::to_string(minutes) + ":" + (secs < 10 ? "0" : "") + std::to_string(secs);
-        }
-
-        return result;
+        return std::format("{}:{:02}", seconds / 60, seconds % 60);
     }
 
     /// @brief Formats time in compact form (e.g., "45" for minutes only)
@@ -184,21 +173,23 @@ class TimeFormatter {
     }
 };
 
-// Theme manager for handling background colors
+// Theme manager for handling background colors using constexpr lookup
 class ThemeManager {
   public:
-    [[nodiscard]] static ImVec4 getBackgroundColor(Core::TimerMode mode) noexcept {
-        using namespace Core;
-        switch (mode) {
-            case TimerMode::Pomodoro:
-                return Configuration::POMODORO_BG_COLOR;
-            case TimerMode::ShortBreak:
-                return Configuration::SHORT_BREAK_BG_COLOR;
-            case TimerMode::LongBreak:
-                return Configuration::LONG_BREAK_BG_COLOR;
-            default:
-                return Configuration::POMODORO_BG_COLOR;
+    /// @brief Lookup table for timer mode to background color mapping
+    static constexpr std::array<std::pair<Core::TimerMode, ImVec4>, 3> MODE_COLORS = {{
+        {Core::TimerMode::Pomodoro, Core::Configuration::POMODORO_BG_COLOR},
+        {Core::TimerMode::ShortBreak, Core::Configuration::SHORT_BREAK_BG_COLOR},
+        {Core::TimerMode::LongBreak, Core::Configuration::LONG_BREAK_BG_COLOR},
+    }};
+
+    [[nodiscard]] static constexpr ImVec4 getBackgroundColor(Core::TimerMode mode) noexcept {
+        for (const auto& [m, color] : MODE_COLORS) {
+            if (m == mode) {
+                return color;
+            }
         }
+        return Core::Configuration::POMODORO_BG_COLOR;
     }
 };
 

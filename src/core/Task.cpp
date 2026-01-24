@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <ranges>
 
 namespace WorkBalance::Core {
 
@@ -55,16 +56,10 @@ void TaskManager::incrementTaskPomodoros(size_t index) {
 }
 
 std::vector<const Task*> TaskManager::getIncompleteTasks() const {
-    std::vector<const Task*> incomplete;
-    incomplete.reserve(m_tasks.size());
+    auto incomplete_view = m_tasks | std::views::filter([](const Task& t) { return !t.completed; }) |
+                           std::views::transform([](const Task& t) { return &t; });
 
-    for (const Task& task : m_tasks) {
-        if (!task.completed) {
-            incomplete.push_back(&task);
-        }
-    }
-
-    return incomplete;
+    return {incomplete_view.begin(), incomplete_view.end()};
 }
 
 std::span<const Task> TaskManager::getTasks() const noexcept {
@@ -107,7 +102,7 @@ void TaskManager::updateCounters() noexcept {
     };
 
     const CounterTotals totals =
-        std::accumulate(m_tasks.begin(), m_tasks.end(), CounterTotals{}, [](CounterTotals acc, const Task& task) {
+        std::ranges::fold_left(m_tasks, CounterTotals{}, [](CounterTotals acc, const Task& task) {
             if (!task.completed) {
                 acc.target += task.estimated_pomodoros;
             }

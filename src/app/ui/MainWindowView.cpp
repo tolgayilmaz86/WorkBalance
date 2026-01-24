@@ -476,7 +476,7 @@ void MainWindowView::renderEditTaskPopup() {
         constexpr float content_width = 450.0f;
 
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        ImGui::Text("%s", m_state.edit_task_name);
+        ImGui::Text("%s", m_state.edit_task_name.data());
         ImGui::PopStyleColor();
 
         ImGui::SameLine();
@@ -507,7 +507,7 @@ void MainWindowView::renderEditTaskPopup() {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 
         const bool enter_pressed =
-            ImGui::InputText("##edit_taskname", m_state.edit_task_name, sizeof(m_state.edit_task_name),
+            ImGui::InputText("##edit_taskname", m_state.edit_task_name.data(), m_state.edit_task_name.size(),
                              ImGuiInputTextFlags_EnterReturnsTrue);
 
         ImGui::PopStyleColor(4);
@@ -631,9 +631,9 @@ void MainWindowView::renderEditTaskPopup() {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
         const bool save_clicked = ImGui::Button("Save", ImVec2(button_width, 40.0f)) || enter_pressed;
-        if (save_clicked && std::strlen(m_state.edit_task_name) > 0 && m_state.edit_task_index >= 0) {
+        if (save_clicked && std::strlen(m_state.edit_task_name.data()) > 0 && m_state.edit_task_index >= 0) {
             if (m_callbacks.onTaskUpdated) {
-                m_callbacks.onTaskUpdated(static_cast<size_t>(m_state.edit_task_index), m_state.edit_task_name,
+                m_callbacks.onTaskUpdated(static_cast<size_t>(m_state.edit_task_index), m_state.edit_task_name.data(),
                                           m_state.edit_task_estimated_pomodoros, m_state.edit_task_completed_pomodoros);
             }
             ImGui::CloseCurrentPopup();

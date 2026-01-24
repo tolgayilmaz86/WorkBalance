@@ -177,7 +177,7 @@ void TaskListPanel::renderTaskItem(size_t index, const Core::Task& task) {
     if (ImGui::Button(ICON_FA_PEN, ImVec2(20.0f, 20.0f))) {
         m_state.show_edit_task = true;
         m_state.edit_task_index = static_cast<int>(index);
-        strncpy_s(m_state.edit_task_name, task.name.c_str(), sizeof(m_state.edit_task_name) - 1);
+        strncpy_s(m_state.edit_task_name.data(), m_state.edit_task_name.size(), task.name.c_str(), _TRUNCATE);
         m_state.edit_task_estimated_pomodoros = task.estimated_pomodoros;
         m_state.edit_task_completed_pomodoros = task.completed_pomodoros;
     }
