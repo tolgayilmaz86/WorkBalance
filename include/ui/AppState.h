@@ -42,34 +42,35 @@ struct AppState {
     ImVec2 main_window_drag_offset{0.0f, 0.0f};
     ImVec2 main_overlay_drag_offset{0.0f, 0.0f};
     ImVec2 overlay_drag_offset{0.0f, 0.0f};
-    ImVec2 overlay_position{100.0f, 100.0f};
+    ImVec2 overlay_position{Core::Configuration::DEFAULT_OVERLAY_POSITION_X,
+                            Core::Configuration::DEFAULT_OVERLAY_POSITION_Y};
 
     // Main window position (-1 means use default/centered)
-    int main_window_x = -1;
-    int main_window_y = -1;
+    int main_window_x = Core::Configuration::DEFAULT_WINDOW_POSITION;
+    int main_window_y = Core::Configuration::DEFAULT_WINDOW_POSITION;
 
     // Task editing state
     int edit_task_index = -1;
-    char edit_task_name[256] = "";
-    int edit_task_estimated_pomodoros = 1;
-    int edit_task_completed_pomodoros = 0;
+    char edit_task_name[Core::Configuration::MAX_TASK_NAME_LENGTH] = "";
+    int edit_task_estimated_pomodoros = Core::Configuration::DEFAULT_ESTIMATED_POMODOROS;
+    int edit_task_completed_pomodoros = Core::Configuration::DEFAULT_COMPLETED_POMODOROS;
 
     // Settings editing - Pomodoro
-    int temp_pomodoro_duration = 25;
-    int temp_short_break_duration = 5;
-    int temp_long_break_duration = 15;
+    int temp_pomodoro_duration = Core::Configuration::DEFAULT_POMODORO_MINUTES;
+    int temp_short_break_duration = Core::Configuration::DEFAULT_SHORT_BREAK_MINUTES;
+    int temp_long_break_duration = Core::Configuration::DEFAULT_LONG_BREAK_MINUTES;
 
     // Settings editing - Water
-    int temp_water_interval = 30;  // minutes
-    int temp_water_daily_goal = 8; // glasses
+    int temp_water_interval = Core::Configuration::DEFAULT_WATER_INTERVAL_MINUTES;
+    int temp_water_daily_goal = Core::Configuration::DEFAULT_WATER_DAILY_GOAL;
 
     // Settings editing - Standup
-    int temp_standup_interval = 45; // minutes
-    int temp_standup_duration = 5;  // minutes
+    int temp_standup_interval = Core::Configuration::DEFAULT_STANDUP_INTERVAL_MINUTES;
+    int temp_standup_duration = Core::Configuration::DEFAULT_STANDUP_DURATION_MINUTES;
 
     // Settings editing - Eye Care
-    int temp_eye_interval = 20;       // minutes
-    int temp_eye_break_duration = 20; // seconds
+    int temp_eye_interval = Core::Configuration::DEFAULT_EYE_INTERVAL_MINUTES;
+    int temp_eye_break_duration = Core::Configuration::DEFAULT_EYE_BREAK_DURATION_SECONDS;
 
     // UI state
     int current_task_index = 0;
@@ -81,7 +82,7 @@ struct AppState {
 
     // Wellness counters cached from domain layer
     int water_glasses_consumed = 0;
-    int water_daily_goal = 8;
+    int water_daily_goal = Core::Configuration::DEFAULT_WATER_DAILY_GOAL;
     int standups_completed = 0;
     int eye_breaks_completed = 0;
 

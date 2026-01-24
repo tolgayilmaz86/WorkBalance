@@ -1,8 +1,11 @@
 #pragma once
 
+#include "ITimeSource.h"
+
 #include <chrono>
-#include <functional>
 #include <concepts>
+#include <functional>
+#include <memory>
 
 namespace WorkBalance::Core {
 enum class TimerMode { Pomodoro, ShortBreak, LongBreak };
@@ -15,7 +18,8 @@ concept TimerCallback = std::invocable<F>;
 
 class Timer {
   public:
-    Timer(int pomodoro_duration, int short_break_duration, int long_break_duration) noexcept;
+    Timer(int pomodoro_duration, int short_break_duration, int long_break_duration,
+          std::shared_ptr<ITimeSource> time_source = createDefaultTimeSource()) noexcept;
 
     // Update timer state, returns true if timer completed
     [[nodiscard]] bool update() noexcept;
@@ -62,6 +66,7 @@ class Timer {
     [[nodiscard]] int getLongBreakDuration() const noexcept;
 
   private:
+    std::shared_ptr<ITimeSource> m_time_source;
     int m_pomodoro_duration;
     int m_short_break_duration;
     int m_long_break_duration;

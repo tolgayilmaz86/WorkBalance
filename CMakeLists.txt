@@ -10,13 +10,14 @@ endif()
 project(WorkBalance VERSION 1.0.0 LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Add /FS flag for MSVC to fix parallel compilation PDB file access issues
+# Add /Zc:__cplusplus for correct __cplusplus macro value
 if(MSVC)
-    add_compile_options(/FS)
+    add_compile_options(/FS /Zc:__cplusplus)
 endif()
 
 # Find required packages
@@ -163,7 +164,7 @@ target_link_libraries(WorkBalance PRIVATE
 
 # Set target properties
 set_target_properties(WorkBalance PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )

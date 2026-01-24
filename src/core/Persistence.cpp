@@ -1,5 +1,7 @@
 #include <core/Persistence.h>
 
+#include <core/Configuration.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -238,12 +240,15 @@ std::filesystem::path PersistenceManager::getDefaultConfigDirectory() {
     return std::filesystem::current_path() / APP_FOLDER_NAME;
 }
 
-bool PersistenceManager::save(const PersistentData& data) const {
+std::expected<void, PersistenceError> PersistenceManager::save(const PersistentData& data) const {
     try {
         // Ensure directory exists
         const auto directory = m_config_path.parent_path();
         if (!std::filesystem::exists(directory)) {
-            std::filesystem::create_directories(directory);
+            if (!std::filesystem::create_directories(directory)) {
+                std::cerr << "Failed to create config directory: " << directory << '\n';
+                return std::unexpected(PersistenceError::DirectoryCreateError);
+            }
         }
 
         const std::string json = serializeToJson(data);
@@ -251,36 +256,43 @@ bool PersistenceManager::save(const PersistentData& data) const {
         std::ofstream file(m_config_path);
         if (!file.is_open()) {
             std::cerr << "Failed to open config file for writing: " << m_config_path << '\n';
-            return false;
+            return std::unexpected(PersistenceError::FileOpenError);
         }
 
         file << json;
-        return file.good();
+        if (!file.good()) {
+            return std::unexpected(PersistenceError::WriteError);
+        }
+        return {};
     } catch (const std::exception& e) {
         std::cerr << "Error saving configuration: " << e.what() << '\n';
-        return false;
+        return std::unexpected(PersistenceError::WriteError);
     }
 }
 
-std::optional<PersistentData> PersistenceManager::load() const {
+std::expected<PersistentData, PersistenceError> PersistenceManager::load() const {
     try {
         if (!hasSavedData()) {
-            return std::nullopt;
+            return std::unexpected(PersistenceError::FileNotFound);
         }
 
         std::ifstream file(m_config_path);
         if (!file.is_open()) {
-            return std::nullopt;
+            return std::unexpected(PersistenceError::FileOpenError);
         }
 
         std::stringstream buffer;
         buffer << file.rdbuf();
         const std::string json = buffer.str();
 
-        return deserializeFromJson(json);
+        auto result = deserializeFromJson(json);
+        if (!result) {
+            return std::unexpected(PersistenceError::ParseError);
+        }
+        return *result;
     } catch (const std::exception& e) {
         std::cerr << "Error loading configuration: " << e.what() << '\n';
-        return std::nullopt;
+        return std::unexpected(PersistenceError::ParseError);
     }
 }
 
@@ -340,15 +352,22 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
     // Extract settings section
     const std::string settings_json = extractJsonValue(json, "settings");
     if (!settings_json.empty()) {
-        data.settings.pomodoro_duration_minutes = extractJsonInt(settings_json, "pomodoro_duration_minutes", 25);
-        data.settings.short_break_duration_minutes = extractJsonInt(settings_json, "short_break_duration_minutes", 5);
-        data.settings.long_break_duration_minutes = extractJsonInt(settings_json, "long_break_duration_minutes", 15);
+        data.settings.pomodoro_duration_minutes =
+            extractJsonInt(settings_json, "pomodoro_duration_minutes", Configuration::DEFAULT_POMODORO_MINUTES);
+        data.settings.short_break_duration_minutes =
+            extractJsonInt(settings_json, "short_break_duration_minutes", Configuration::DEFAULT_SHORT_BREAK_MINUTES);
+        data.settings.long_break_duration_minutes =
+            extractJsonInt(settings_json, "long_break_duration_minutes", Configuration::DEFAULT_LONG_BREAK_MINUTES);
         data.settings.auto_start_breaks = extractJsonBool(settings_json, "auto_start_breaks", false);
         data.settings.auto_start_pomodoros = extractJsonBool(settings_json, "auto_start_pomodoros", false);
-        data.settings.overlay_position_x = extractJsonFloat(settings_json, "overlay_position_x", 100.0f);
-        data.settings.overlay_position_y = extractJsonFloat(settings_json, "overlay_position_y", 100.0f);
-        data.settings.main_window_x = extractJsonInt(settings_json, "main_window_x", -1);
-        data.settings.main_window_y = extractJsonInt(settings_json, "main_window_y", -1);
+        data.settings.overlay_position_x =
+            extractJsonFloat(settings_json, "overlay_position_x", Configuration::DEFAULT_OVERLAY_POSITION_X);
+        data.settings.overlay_position_y =
+            extractJsonFloat(settings_json, "overlay_position_y", Configuration::DEFAULT_OVERLAY_POSITION_Y);
+        data.settings.main_window_x =
+            extractJsonInt(settings_json, "main_window_x", Configuration::DEFAULT_WINDOW_POSITION);
+        data.settings.main_window_y =
+            extractJsonInt(settings_json, "main_window_y", Configuration::DEFAULT_WINDOW_POSITION);
         data.settings.show_pomodoro_in_overlay = extractJsonBool(settings_json, "show_pomodoro_in_overlay", true);
         data.settings.show_water_in_overlay = extractJsonBool(settings_json, "show_water_in_overlay", true);
         data.settings.show_standup_in_overlay = extractJsonBool(settings_json, "show_standup_in_overlay", true);
@@ -366,8 +385,10 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
             Task task;
             task.name = extractJsonValue(task_json, "name");
             task.completed = extractJsonBool(task_json, "completed", false);
-            task.estimated_pomodoros = extractJsonInt(task_json, "estimated_pomodoros", 1);
-            task.completed_pomodoros = extractJsonInt(task_json, "completed_pomodoros", 0);
+            task.estimated_pomodoros =
+                extractJsonInt(task_json, "estimated_pomodoros", Configuration::DEFAULT_ESTIMATED_POMODOROS);
+            task.completed_pomodoros =
+                extractJsonInt(task_json, "completed_pomodoros", Configuration::DEFAULT_COMPLETED_POMODOROS);
             data.tasks.push_back(std::move(task));
         }
     }

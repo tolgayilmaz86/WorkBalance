@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Configuration.h"
 #include "Task.h"
 
+#include <expected>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -9,18 +11,39 @@
 
 namespace WorkBalance::Core {
 
+/// @brief Error types that can occur during persistence operations
+enum class PersistenceError { FileNotFound, FileOpenError, ParseError, WriteError, DirectoryCreateError };
+
+/// @brief Get a human-readable description of a persistence error
+[[nodiscard]] constexpr std::string_view getPersistenceErrorMessage(PersistenceError error) noexcept {
+    switch (error) {
+        case PersistenceError::FileNotFound:
+            return "Configuration file not found";
+        case PersistenceError::FileOpenError:
+            return "Failed to open configuration file";
+        case PersistenceError::ParseError:
+            return "Failed to parse configuration file";
+        case PersistenceError::WriteError:
+            return "Failed to write configuration file";
+        case PersistenceError::DirectoryCreateError:
+            return "Failed to create configuration directory";
+        default:
+            return "Unknown persistence error";
+    }
+}
+
 /// @brief User-configurable settings that persist across sessions
 struct UserSettings {
-    int pomodoro_duration_minutes = 25;
-    int short_break_duration_minutes = 5;
-    int long_break_duration_minutes = 15;
+    int pomodoro_duration_minutes = Configuration::DEFAULT_POMODORO_MINUTES;
+    int short_break_duration_minutes = Configuration::DEFAULT_SHORT_BREAK_MINUTES;
+    int long_break_duration_minutes = Configuration::DEFAULT_LONG_BREAK_MINUTES;
     bool auto_start_breaks = false;
     bool auto_start_pomodoros = false;
     // Window positions
-    float overlay_position_x = 100.0f;
-    float overlay_position_y = 100.0f;
-    int main_window_x = -1; // -1 means use default (centered)
-    int main_window_y = -1;
+    float overlay_position_x = Configuration::DEFAULT_OVERLAY_POSITION_X;
+    float overlay_position_y = Configuration::DEFAULT_OVERLAY_POSITION_Y;
+    int main_window_x = Configuration::DEFAULT_WINDOW_POSITION; // -1 means use default (centered)
+    int main_window_y = Configuration::DEFAULT_WINDOW_POSITION;
     // Overlay visibility settings
     bool show_pomodoro_in_overlay = true;
     bool show_water_in_overlay = true;
@@ -43,12 +66,12 @@ class PersistenceManager {
 
     /// @brief Saves the current application state to disk
     /// @param data The data to persist
-    /// @return true if save was successful
-    [[nodiscard]] bool save(const PersistentData& data) const;
+    /// @return std::expected with void on success, or PersistenceError on failure
+    [[nodiscard]] std::expected<void, PersistenceError> save(const PersistentData& data) const;
 
     /// @brief Loads previously saved application state from disk
-    /// @return The loaded data, or std::nullopt if no data exists or load failed
-    [[nodiscard]] std::optional<PersistentData> load() const;
+    /// @return std::expected with PersistentData on success, or PersistenceError on failure
+    [[nodiscard]] std::expected<PersistentData, PersistenceError> load() const;
 
     /// @brief Checks if a saved state file exists
     [[nodiscard]] bool hasSavedData() const;

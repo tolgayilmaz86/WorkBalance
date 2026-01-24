@@ -4,7 +4,6 @@
 
 namespace WorkBalance::Core {
 namespace {
-using clock = std::chrono::steady_clock;
 
 template <typename Fn>
 void assignIfChanged(int& field, int value, Fn&& callback) noexcept {
@@ -28,10 +27,11 @@ void assignIfChanged(int& field, int value, Fn&& callback) noexcept {
 }
 } // namespace
 
-Timer::Timer(int pomodoro_duration, int short_break_duration, int long_break_duration) noexcept
-    : m_pomodoro_duration(pomodoro_duration), m_short_break_duration(short_break_duration),
-      m_long_break_duration(long_break_duration), m_remaining_time(pomodoro_duration),
-      m_current_mode(TimerMode::Pomodoro), m_timer_state(TimerState::Stopped) {
+Timer::Timer(int pomodoro_duration, int short_break_duration, int long_break_duration,
+             std::shared_ptr<ITimeSource> time_source) noexcept
+    : m_time_source(std::move(time_source)), m_pomodoro_duration(pomodoro_duration),
+      m_short_break_duration(short_break_duration), m_long_break_duration(long_break_duration),
+      m_remaining_time(pomodoro_duration), m_current_mode(TimerMode::Pomodoro), m_timer_state(TimerState::Stopped) {
 }
 
 bool Timer::update() noexcept {
@@ -39,7 +39,7 @@ bool Timer::update() noexcept {
         return false;
     }
 
-    const auto current_time = clock::now();
+    const auto current_time = m_time_source->now();
     const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - m_last_time);
 
     if (elapsed.count() <= 0) {
@@ -64,7 +64,7 @@ void Timer::start() noexcept {
     }
 
     m_timer_state = TimerState::Running;
-    m_last_time = clock::now();
+    m_last_time = m_time_source->now();
 }
 
 void Timer::pause() noexcept {
@@ -86,7 +86,8 @@ void Timer::stop() noexcept {
 }
 
 void Timer::reset() noexcept {
-    m_remaining_time = durationForMode(m_current_mode, m_pomodoro_duration, m_short_break_duration, m_long_break_duration);
+    m_remaining_time =
+        durationForMode(m_current_mode, m_pomodoro_duration, m_short_break_duration, m_long_break_duration);
 }
 
 void Timer::setMode(TimerMode mode) noexcept {

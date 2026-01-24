@@ -459,11 +459,11 @@ void Application::Impl::updateWindowTitle(int remaining_seconds) {
 
 void Application::Impl::loadPersistedData() {
     auto loaded_data = m_persistence.load();
-    if (!loaded_data) {
+    if (!loaded_data.has_value()) {
         return;
     }
 
-    const auto& data = *loaded_data;
+    const auto& data = loaded_data.value();
 
     // Apply saved timer durations
     m_timer.setPomodoroDuration(minutesToSeconds(data.settings.pomodoro_duration_minutes));
@@ -549,7 +549,7 @@ void Application::Impl::savePersistedData() const {
     // Save current task index
     data.current_task_index = m_state.current_task_index;
 
-    [[maybe_unused]] const bool saved = m_persistence.save(data);
+    [[maybe_unused]] const auto save_result = m_persistence.save(data);
 }
 
 void Application::Impl::initializeSystemTray() {

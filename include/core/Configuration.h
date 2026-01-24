@@ -28,6 +28,26 @@ struct Configuration {
     static constexpr int DEFAULT_SHORT_BREAK_DURATION = 5 * 60;
     static constexpr int DEFAULT_LONG_BREAK_DURATION = 15 * 60;
 
+    // Timer defaults (in minutes) for UI/settings
+    static constexpr int DEFAULT_POMODORO_MINUTES = 25;
+    static constexpr int DEFAULT_SHORT_BREAK_MINUTES = 5;
+    static constexpr int DEFAULT_LONG_BREAK_MINUTES = 15;
+
+    // Wellness defaults (in minutes) for UI/settings
+    static constexpr int DEFAULT_WATER_INTERVAL_MINUTES = 30;
+    static constexpr int DEFAULT_WATER_DAILY_GOAL = 8;
+    static constexpr int DEFAULT_STANDUP_INTERVAL_MINUTES = 45;
+    static constexpr int DEFAULT_STANDUP_DURATION_MINUTES = 5;
+    static constexpr int DEFAULT_EYE_INTERVAL_MINUTES = 20;
+    static constexpr int DEFAULT_EYE_BREAK_DURATION_SECONDS = 20;
+
+    // Window position defaults (-1 means use default/centered)
+    static constexpr int DEFAULT_WINDOW_POSITION = -1;
+
+    // Overlay position defaults
+    static constexpr float DEFAULT_OVERLAY_POSITION_X = 100.0f;
+    static constexpr float DEFAULT_OVERLAY_POSITION_Y = 100.0f;
+
     // Frame rate settings
     static constexpr double TARGET_FPS = 144.0;
     static constexpr double FRAME_TIME = 1.0 / TARGET_FPS;
@@ -45,6 +65,11 @@ struct Configuration {
     static constexpr float BUTTON_FONT_SIZE = 24.0f;
     static constexpr float OVERLAY_FONT_SIZE = 40.0f;
     static constexpr float REGULAR_FONT_SIZE = 18.0f;
+
+    // Task defaults
+    static constexpr int DEFAULT_ESTIMATED_POMODOROS = 1;
+    static constexpr int DEFAULT_COMPLETED_POMODOROS = 0;
+    static constexpr int MAX_TASK_NAME_LENGTH = 256;
 };
 
 } // namespace WorkBalance::Core
