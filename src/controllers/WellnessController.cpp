@@ -27,26 +27,28 @@ void WellnessController::update() {
 }
 
 void WellnessController::handleTimerComplete(Core::WellnessType type) {
-    playBellSound();
-
     // For timers with breaks, the completion is handled differently
     switch (type) {
         case Core::WellnessType::Water:
-            // Water reminder - just notify user
+            // Water reminder - play special hydration sound
+            playHydrationSound();
             break;
         case Core::WellnessType::Standup:
+            playBellSound();
             // If break completed, restart interval timer
             if (m_standup_timer && !m_standup_timer->isInBreak()) {
                 m_standup_timer->start();
             }
             break;
         case Core::WellnessType::EyeStrain:
+            playBellSound();
             // If break completed, restart interval timer
             if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {
                 m_eye_care_timer->start();
             }
             break;
         default:
+            playBellSound();
             break;
     }
 
@@ -176,6 +178,12 @@ void WellnessController::playClickSound() {
 void WellnessController::playBellSound() {
     if (m_audio && m_audio->isInitialized()) {
         m_audio->playBellSound();
+    }
+}
+
+void WellnessController::playHydrationSound() {
+    if (m_audio && m_audio->isInitialized()) {
+        m_audio->playHydrationSound();
     }
 }
 

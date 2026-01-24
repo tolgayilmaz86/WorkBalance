@@ -61,6 +61,14 @@ void AudioManager::playBellSound() {
     playEmbeddedSound(bell_wav_data, bell_wav_data_size);
 }
 
+void AudioManager::playHydrationSound() {
+    if (!m_initialized) {
+        return;
+    }
+
+    playEmbeddedSound(hydration_wav_data, hydration_wav_data_size);
+}
+
 bool AudioManager::isInitialized() const noexcept {
     return m_initialized;
 }

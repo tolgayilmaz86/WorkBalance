@@ -11,6 +11,7 @@ class IAudioService {
 
     virtual void playClickSound() = 0;
     virtual void playBellSound() = 0;
+    virtual void playHydrationSound() = 0;
     virtual bool isInitialized() const noexcept = 0;
 };
 

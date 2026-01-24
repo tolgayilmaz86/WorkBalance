@@ -20,6 +20,7 @@ class AudioManager final : public IAudioService {
 
     void playClickSound() override;
     void playBellSound() override;
+    void playHydrationSound() override;
     [[nodiscard]] bool isInitialized() const noexcept override;
 
   private:
