@@ -80,6 +80,12 @@ struct AppState {
     int water_daily_goal = 8;
     int standups_completed = 0;
     int eye_breaks_completed = 0;
+
+    // Overlay visibility settings (which timers to show in overlay mode)
+    bool show_pomodoro_in_overlay = true;
+    bool show_water_in_overlay = true;
+    bool show_standup_in_overlay = true;
+    bool show_eye_care_in_overlay = true;
 };
 
 // Utility class for time formatting

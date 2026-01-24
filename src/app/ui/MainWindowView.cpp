@@ -282,43 +282,48 @@ void MainWindowView::renderEyeCareContent() {
 }
 
 void MainWindowView::renderOverlayMode() {
-    // Count active wellness timers to decide format
+    // Count active wellness timers that are visible in overlay to decide format
     int active_wellness_count = 0;
-    if (m_water_timer && m_water_timer->isRunning())
+    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay)
         active_wellness_count++;
-    if (m_standup_timer && m_standup_timer->isRunning())
+    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay)
         active_wellness_count++;
-    if (m_eye_care_timer && m_eye_care_timer->isRunning())
+    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay)
         active_wellness_count++;
 
     // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
     // Use compact format for all timers when multiple are active
     std::string display_str;
-    if (active_wellness_count > 0) {
-        // Multiple timers - use compact format for all (no seconds)
-        display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
-                                                                             m_timer.getRemainingTime());
-    } else {
-        // Single timer - show full format with seconds
-        display_str =
-            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+    if (m_state.show_pomodoro_in_overlay) {
+        if (active_wellness_count > 0) {
+            // Multiple timers - use compact format for all (no seconds)
+            display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
+                                                                                 m_timer.getRemainingTime());
+        } else {
+            // Single timer - show full format with seconds
+            display_str =
+                WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+        }
     }
 
-    // Add wellness timers if they exist and are running
-    if (m_water_timer && m_water_timer->isRunning()) {
-        display_str += "  |  ";
+    // Add wellness timers if they exist, are running, and enabled in overlay
+    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
     }
-    if (m_standup_timer && m_standup_timer->isRunning()) {
-        display_str += "  |  ";
+    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
     }
-    if (m_eye_care_timer && m_eye_care_timer->isRunning()) {
-        display_str += "  |  ";
+    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
@@ -515,6 +520,9 @@ void MainWindowView::renderSettingsPopup() {
         render_duration_row("Long Break", "##longbreak_minus", "##longbreak", "##longbreak_plus",
                             m_state.temp_long_break_duration, 1, 60);
 
+        ImGui::Spacing();
+        ImGui::Checkbox("Show in overlay", &m_state.show_pomodoro_in_overlay);
+
         ImGui::PopStyleColor(7);
         ImGui::PopStyleVar(2);
 
@@ -546,6 +554,8 @@ void MainWindowView::renderSettingsPopup() {
                             m_state.temp_water_interval, 5, 120);
         render_duration_row("Daily Goal", "##watergoal_minus", "##water_goal", "##watergoal_plus",
                             m_state.temp_water_daily_goal, 1, 20);
+        ImGui::Checkbox("Show in overlay##water", &m_state.show_water_in_overlay);
+        ImGui::Spacing();
 
         // Standup settings
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.5f, 0.9f, 1.0f));
@@ -555,6 +565,8 @@ void MainWindowView::renderSettingsPopup() {
                             m_state.temp_standup_interval, 15, 120);
         render_duration_row("Break (min)", "##standup_dur_minus", "##standup_duration", "##standup_dur_plus",
                             m_state.temp_standup_duration, 1, 15);
+        ImGui::Checkbox("Show in overlay##standup", &m_state.show_standup_in_overlay);
+        ImGui::Spacing();
 
         // Eye care settings
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.6f, 1.0f));
@@ -564,6 +576,7 @@ void MainWindowView::renderSettingsPopup() {
                             m_state.temp_eye_interval, 10, 60);
         render_duration_row("Break (sec)", "##eye_dur_minus", "##eye_duration", "##eye_dur_plus",
                             m_state.temp_eye_break_duration, 10, 60);
+        ImGui::Checkbox("Show in overlay##eyecare", &m_state.show_eye_care_in_overlay);
 
         ImGui::PopStyleColor(7);
         ImGui::PopStyleVar(2);

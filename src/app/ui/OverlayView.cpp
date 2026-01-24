@@ -12,43 +12,48 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
                                            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                                            ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 
-    // Count active wellness timers to decide format
+    // Count active wellness timers that are visible in overlay to decide format
     int active_wellness_count = 0;
-    if (m_water_timer && m_water_timer->isRunning())
+    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay)
         active_wellness_count++;
-    if (m_standup_timer && m_standup_timer->isRunning())
+    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay)
         active_wellness_count++;
-    if (m_eye_care_timer && m_eye_care_timer->isRunning())
+    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay)
         active_wellness_count++;
 
     // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
     // Use compact format for all timers when multiple are active
     std::string display_str;
-    if (active_wellness_count > 0) {
-        // Multiple timers - use compact format for all (no seconds)
-        display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
-                                                                             m_timer.getRemainingTime());
-    } else {
-        // Single timer - show full format with seconds
-        display_str =
-            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+    if (m_state.show_pomodoro_in_overlay) {
+        if (active_wellness_count > 0) {
+            // Multiple timers - use compact format for all (no seconds)
+            display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
+                                                                                 m_timer.getRemainingTime());
+        } else {
+            // Single timer - show full format with seconds
+            display_str =
+                WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+        }
     }
 
-    // Add wellness timers if they exist and are running
-    if (m_water_timer && m_water_timer->isRunning()) {
-        display_str += "  |  ";
+    // Add wellness timers if they exist, are running, and enabled in overlay
+    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
     }
-    if (m_standup_timer && m_standup_timer->isRunning()) {
-        display_str += "  |  ";
+    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
     }
-    if (m_eye_care_timer && m_eye_care_timer->isRunning()) {
-        display_str += "  |  ";
+    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
+        if (!display_str.empty())
+            display_str += "  |  ";
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
