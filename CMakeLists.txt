@@ -89,6 +89,9 @@ if(WIN32)
     main.cpp
     src/app/Application.cpp
     src/app/ImGuiLayer.cpp
+    src/controllers/TaskController.cpp
+    src/controllers/TimerController.cpp
+    src/controllers/WellnessController.cpp
     src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp
@@ -124,6 +127,9 @@ else()
     main.cpp
     src/app/Application.cpp
     src/app/ImGuiLayer.cpp
+    src/controllers/TaskController.cpp
+    src/controllers/TimerController.cpp
+    src/controllers/WellnessController.cpp
     src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp

@@ -5,6 +5,10 @@
 #include <string_view>
 
 #include <app/ImGuiLayer.h>
+#include <app/ui/callbacks/SettingsCallbacks.h>
+#include <app/ui/callbacks/TaskCallbacks.h>
+#include <app/ui/callbacks/TimerCallbacks.h>
+#include <app/ui/callbacks/WindowCallbacks.h>
 #include <core/Task.h>
 #include <core/Timer.h>
 #include <core/WellnessTimer.h>
@@ -19,6 +23,8 @@ class WaterReminderView;
 class StandupReminderView;
 class EyeCareReminderView;
 
+/// @brief Combined callbacks for MainWindowView (preserves backward compatibility)
+/// @deprecated Use individual callback structs (TimerCallbacks, TaskCallbacks, etc.) instead
 struct MainWindowCallbacks {
     std::function<void()> onToggleTimer;
     std::function<void(Core::TimerMode)> onModeChange;
@@ -34,6 +40,22 @@ struct MainWindowCallbacks {
     std::function<void(size_t index)> onTaskCompletionToggled;
     // Navigation callback
     std::function<void(WorkBalance::NavigationTab)> onTabChanged;
+
+    /// @brief Create MainWindowCallbacks from individual callback structs
+    static MainWindowCallbacks fromSplit(TimerCallbacks timer, TaskCallbacks task, SettingsCallbacks settings,
+                                         WindowCallbacks window) {
+        return MainWindowCallbacks{.onToggleTimer = std::move(timer.onToggle),
+                                   .onModeChange = std::move(timer.onModeChange),
+                                   .onToggleOverlayMode = std::move(window.onToggleOverlayMode),
+                                   .onRequestClose = std::move(window.onRequestClose),
+                                   .onDurationsApplied = std::move(settings.onPomodoroDurationsApplied),
+                                   .onWellnessSettingsApplied = std::move(settings.onWellnessSettingsApplied),
+                                   .onTaskAdded = std::move(task.onAdd),
+                                   .onTaskRemoved = std::move(task.onRemove),
+                                   .onTaskUpdated = std::move(task.onUpdate),
+                                   .onTaskCompletionToggled = std::move(task.onToggleCompletion),
+                                   .onTabChanged = std::move(window.onTabChanged)};
+    }
 };
 
 /// @brief Callbacks for wellness timer interactions

@@ -1203,17 +1203,17 @@ pomodoro_count.observe([](int old_count, int new_count) {
 ## 5. Implementation Priority
 
 ### Phase 1: Foundation (Week 1-2)
-- [ ] Update CMakeLists.txt to C++23
-- [ ] Add `std::expected` to Persistence
-- [ ] Create `ITimeSource` interface for testing
-- [ ] Create `IPersistenceService` interface
-- [ ] Centralize magic numbers in Configuration.h
+- [x] Update CMakeLists.txt to C++23
+- [x] Add `std::expected` to Persistence
+- [x] Create `ITimeSource` interface for testing
+- [x] Create `IPersistenceService` interface
+- [x] Centralize magic numbers in Configuration.h
 
 ### Phase 2: Split Large Classes (Week 3-4)
-- [ ] Extract `TimerController` from Application
-- [ ] Extract `WellnessController` from Application  
-- [ ] Extract `TaskController` from Application
-- [ ] Split `MainWindowCallbacks` into focused groups
+- [x] Extract `TimerController` from Application
+- [x] Extract `WellnessController` from Application  
+- [x] Extract `TaskController` from Application
+- [x] Split `MainWindowCallbacks` into focused groups
 
 ### Phase 3: UI Refactoring (Week 5-6)
 - [ ] Extract `SettingsPopup` component
