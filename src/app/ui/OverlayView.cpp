@@ -56,8 +56,12 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
 
     // Calculate required window size based on text
     ImFont* overlay_font = m_imgui.overlayFont();
+    const float font_scale = (active_wellness_count > 0) ? 0.7f : 1.0f;
+
     ImGui::PushFont(overlay_font);
+    ImGui::SetWindowFontScale(font_scale);
     ImVec2 text_size = ImGui::CalcTextSize(display_str.c_str());
+    ImGui::SetWindowFontScale(1.0f);
     ImGui::PopFont();
 
     constexpr float padding_x = 40.0f; // Horizontal padding
@@ -89,12 +93,14 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
 
         // Use overlay font which has icons merged
         ImGui::PushFont(overlay_font);
+        ImGui::SetWindowFontScale(font_scale);
 
         ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
 
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Text("%s", display_str.c_str());
         ImGui::PopStyleColor();
+        ImGui::SetWindowFontScale(1.0f);
         ImGui::PopFont();
 
         GLFWwindow* handle = overlay_window.get();

@@ -104,18 +104,13 @@ class TimeFormatter {
         return result;
     }
 
-    /// @brief Formats time in compact form (e.g., "45m" or "2:30" if under 10 min)
+    /// @brief Formats time in compact form (e.g., "45" for minutes only)
     [[nodiscard]] static std::string formatTimeCompact(int seconds) {
         if (seconds < 0)
             seconds = 0;
 
         int minutes = seconds / 60;
-        int secs = seconds % 60;
-
-        if (minutes >= 10) {
-            return std::to_string(minutes) + "m";
-        }
-        return std::to_string(minutes) + ":" + (secs < 10 ? "0" : "") + std::to_string(secs);
+        return std::to_string(minutes);
     }
 
     /// @brief Formats timer display string with mode icon

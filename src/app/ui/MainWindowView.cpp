@@ -325,7 +325,14 @@ void MainWindowView::renderOverlayMode() {
     }
 
     ImFont* overlay_font = m_imgui.overlayFont();
-    const ImVec2 text_size = calculateTextSize(overlay_font, display_str);
+    const float font_scale = (active_wellness_count > 0) ? 0.7f : 1.0f;
+
+    // Calculate text size with font scale
+    ImGui::PushFont(overlay_font);
+    ImGui::SetWindowFontScale(font_scale);
+    const ImVec2 text_size = ImGui::CalcTextSize(display_str.c_str());
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::PopFont();
 
     // Dynamically resize window based on content
     constexpr float padding_x = 40.0f;
@@ -347,7 +354,9 @@ void MainWindowView::renderOverlayMode() {
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     {
         ScopedFont font_scope(overlay_font);
+        ImGui::SetWindowFontScale(font_scale);
         ImGui::TextUnformatted(display_str.c_str());
+        ImGui::SetWindowFontScale(1.0f);
     }
     ImGui::PopStyleColor();
 
