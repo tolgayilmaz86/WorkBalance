@@ -219,3 +219,52 @@ else()
         $<$<CONFIG:Release>:-DNDEBUG>   # Define NDEBUG
     )
 endif()
+
+# ============================================================================
+# Unit Tests
+# ============================================================================
+option(BUILD_TESTS "Build unit tests" ON)
+
+if(BUILD_TESTS)
+    find_package(GTest CONFIG REQUIRED)
+    enable_testing()
+
+    add_executable(WorkBalanceTests
+        tests/main.cpp
+        tests/EventTest.cpp
+        tests/ObservableTest.cpp
+        tests/TimerTest.cpp
+        tests/TaskTest.cpp
+        src/core/Timer.cpp
+        src/core/Task.cpp
+    )
+
+    target_include_directories(WorkBalanceTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(WorkBalanceTests PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+    )
+
+    set_target_properties(WorkBalanceTests PROPERTIES
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+
+    if(MSVC)
+        target_compile_options(WorkBalanceTests PRIVATE
+            /W4 /permissive- /Zc:__cplusplus /Zc:preprocessor /utf-8
+        )
+    else()
+        target_compile_options(WorkBalanceTests PRIVATE
+            -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion
+        )
+    endif()
+
+    include(GoogleTest)
+    gtest_discover_tests(WorkBalanceTests)
+endif()

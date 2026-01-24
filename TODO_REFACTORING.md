@@ -1228,10 +1228,10 @@ pomodoro_count.observe([](int old_count, int new_count) {
 - [x] Replace C-arrays with std::string
 
 ### Phase 5: Architecture (Week 9-10)
-- [ ] Implement Event system
-- [ ] Add Observable state management
+- [x] Implement Event system
+- [x] Add Observable state management
 - [ ] Consider adding nlohmann/json dependency
-- [ ] Write unit tests using mock interfaces
+- [x] Write unit tests using mock interfaces
 
 ---
 
