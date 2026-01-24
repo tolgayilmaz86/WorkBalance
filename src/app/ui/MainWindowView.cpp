@@ -3,6 +3,7 @@
 #endif
 
 #include <app/ui/MainWindowView.h>
+#include <app/ui/WellnessViews.h>
 
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -14,6 +15,7 @@
 
 #include "assets/fonts/IconsFontAwesome5Pro.h"
 #include <core/Configuration.h>
+#include <core/WellnessTypes.h>
 #include <ui/AppState.h>
 
 namespace WorkBalance::App::UI {
@@ -107,12 +109,55 @@ MainWindowView::MainWindowView(System::MainWindow& window, App::ImGuiLayer& imgu
                                Core::TaskManager& taskManager, AppState& state, MainWindowCallbacks callbacks)
     : m_window(window), m_imgui(imgui), m_timer(timer), m_task_manager(taskManager), m_state(state),
       m_callbacks(std::move(callbacks)) {
+
+    // Initialize navigation tabs
+    m_navigation_tabs = std::make_unique<WorkBalance::UI::NavigationTabs>(
+        m_state, WorkBalance::UI::NavigationCallbacks{.onTabChanged = [this](NavigationTab tab) {
+            updateBackgroundColor();
+            if (m_callbacks.onTabChanged) {
+                m_callbacks.onTabChanged(tab);
+            }
+        }});
+}
+
+void MainWindowView::setWellnessTimers(Core::WellnessTimer* water, Core::WellnessTimer* standup,
+                                       Core::WellnessTimer* eyeCare) {
+    m_water_timer = water;
+    m_standup_timer = standup;
+    m_eye_care_timer = eyeCare;
+}
+
+void MainWindowView::setWellnessCallbacks(WellnessCallbacks callbacks) {
+    m_wellness_callbacks = std::move(callbacks);
+}
+
+void MainWindowView::updateBackgroundColor() {
+    switch (m_state.active_tab) {
+        case NavigationTab::Pomodoro:
+            m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
+            break;
+        case NavigationTab::Water:
+            m_state.background_color = Core::WellnessDefaults::WATER_BG_COLOR;
+            break;
+        case NavigationTab::Standup:
+            m_state.background_color = Core::WellnessDefaults::STANDUP_BG_COLOR;
+            break;
+        case NavigationTab::EyeCare:
+            m_state.background_color = Core::WellnessDefaults::EYE_STRAIN_BG_COLOR;
+            break;
+    }
 }
 
 void MainWindowView::render() {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(viewport->WorkSize);
+
+    // Main window takes full viewport (tabs are now inside the window)
+    const ImVec2 main_window_pos(viewport->WorkPos.x, viewport->WorkPos.y);
+    const ImVec2 main_window_size(viewport->WorkSize.x, viewport->WorkSize.y);
+
+    // Now render the main window
+    ImGui::SetNextWindowPos(main_window_pos);
+    ImGui::SetNextWindowSize(main_window_size);
 
     constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
@@ -122,10 +167,34 @@ void MainWindowView::render() {
             renderOverlayMode();
         } else {
             renderHeader();
-            renderTimerFrame();
-            renderCurrentTask();
-            renderTaskList();
-            renderPomodoroCounter();
+
+            // Get header height for content positioning
+            const float header_height = ImGui::GetCursorPosY();
+            const ImVec2 window_size = ImGui::GetWindowSize();
+
+            // Main content uses FULL window width now (tabs are outside)
+            const float available_height = window_size.y - header_height;
+
+            // Begin a child region for the main content (full width)
+            ImGui::BeginChild("ContentRegion", ImVec2(0, available_height), false);
+
+            // Render content based on active tab
+            switch (m_state.active_tab) {
+                case NavigationTab::Pomodoro:
+                    renderPomodoroContent();
+                    break;
+                case NavigationTab::Water:
+                    renderWaterContent();
+                    break;
+                case NavigationTab::Standup:
+                    renderStandupContent();
+                    break;
+                case NavigationTab::EyeCare:
+                    renderEyeCareContent();
+                    break;
+            }
+
+            ImGui::EndChild();
 
             renderSettingsPopup();
             renderEditTaskPopup();
@@ -135,6 +204,81 @@ void MainWindowView::render() {
         }
     }
     ImGui::End();
+}
+
+void MainWindowView::renderNavigationTabs(const ImVec2& window_pos, const ImVec2& window_size, float header_height) {
+    if (m_navigation_tabs) {
+        m_navigation_tabs->render(window_pos, window_size, header_height);
+    }
+}
+
+void MainWindowView::renderPomodoroContent() {
+    // Render navigation tabs just above the timer frame
+    if (m_navigation_tabs) {
+        m_navigation_tabs->renderInline();
+    }
+    ImGui::Spacing();
+
+    renderTimerFrame();
+    renderCurrentTask();
+    renderTaskList();
+    renderPomodoroCounter();
+}
+
+void MainWindowView::renderWaterContent() {
+    // Render navigation tabs just above the content
+    if (m_navigation_tabs) {
+        m_navigation_tabs->renderInline();
+    }
+    ImGui::Spacing();
+
+    if (m_water_timer) {
+        WaterReminderView view(m_imgui, *m_water_timer, m_state,
+                               WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onWaterToggle,
+                                                     .onAcknowledge = m_wellness_callbacks.onWaterAcknowledge,
+                                                     .onResetDaily = m_wellness_callbacks.onWaterResetDaily});
+        view.render();
+    } else {
+        ImGui::TextUnformatted("Water reminder not initialized");
+    }
+}
+
+void MainWindowView::renderStandupContent() {
+    // Render navigation tabs just above the content
+    if (m_navigation_tabs) {
+        m_navigation_tabs->renderInline();
+    }
+    ImGui::Spacing();
+
+    if (m_standup_timer) {
+        StandupReminderView view(m_imgui, *m_standup_timer, m_state,
+                                 WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onStandupToggle,
+                                                       .onAcknowledge = m_wellness_callbacks.onStandupAcknowledge,
+                                                       .onStartBreak = m_wellness_callbacks.onStandupStartBreak,
+                                                       .onEndBreak = m_wellness_callbacks.onStandupEndBreak});
+        view.render();
+    } else {
+        ImGui::TextUnformatted("Standup reminder not initialized");
+    }
+}
+
+void MainWindowView::renderEyeCareContent() {
+    // Render navigation tabs just above the content
+    if (m_navigation_tabs) {
+        m_navigation_tabs->renderInline();
+    }
+    ImGui::Spacing();
+
+    if (m_eye_care_timer) {
+        EyeCareReminderView view(m_imgui, *m_eye_care_timer, m_state,
+                                 WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onEyeCareToggle,
+                                                       .onAcknowledge = m_wellness_callbacks.onEyeCareAcknowledge,
+                                                       .onStartBreak = m_wellness_callbacks.onEyeCareStartBreak,
+                                                       .onEndBreak = m_wellness_callbacks.onEyeCareEndBreak});
+        view.render();
+    } else {
+        ImGui::TextUnformatted("Eye care reminder not initialized");
+    }
 }
 
 void MainWindowView::renderOverlayMode() {
@@ -177,9 +321,23 @@ void MainWindowView::renderHeader() {
 
     if (ImGui::Button(ICON_FA_COG, ImVec2(button_size, button_size))) {
         m_state.show_settings = true;
+        // Pomodoro settings
         m_state.temp_pomodoro_duration = m_timer.getPomodoroDuration() / 60;
         m_state.temp_short_break_duration = m_timer.getShortBreakDuration() / 60;
         m_state.temp_long_break_duration = m_timer.getLongBreakDuration() / 60;
+        // Wellness settings
+        if (m_water_timer) {
+            m_state.temp_water_interval = m_water_timer->getIntervalSeconds() / 60;
+            m_state.temp_water_daily_goal = m_state.water_daily_goal;
+        }
+        if (m_standup_timer) {
+            m_state.temp_standup_interval = m_standup_timer->getIntervalSeconds() / 60;
+            m_state.temp_standup_duration = m_standup_timer->getBreakDurationSeconds() / 60;
+        }
+        if (m_eye_care_timer) {
+            m_state.temp_eye_interval = m_eye_care_timer->getIntervalSeconds() / 60;
+            m_state.temp_eye_break_duration = m_eye_care_timer->getBreakDurationSeconds();
+        }
     }
 
     ImGui::SameLine();
@@ -298,6 +456,56 @@ void MainWindowView::renderSettingsPopup() {
         ImGui::PopStyleVar(2);
 
         ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // Wellness Settings Section
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        ImGui::Text("Wellness Reminders");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 12.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.95f, 0.95f, 0.95f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+
+        // Water settings
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.6f, 0.9f, 1.0f));
+        ImGui::Text(ICON_FA_TINT " Water");
+        ImGui::PopStyleColor();
+        render_duration_row("Interval (min)", "##water_minus", "##water_interval", "##water_plus",
+                            m_state.temp_water_interval, 5, 120);
+        render_duration_row("Daily Goal", "##watergoal_minus", "##water_goal", "##watergoal_plus",
+                            m_state.temp_water_daily_goal, 1, 20);
+
+        // Standup settings
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.5f, 0.9f, 1.0f));
+        ImGui::Text(ICON_FA_WALKING " Stand Up");
+        ImGui::PopStyleColor();
+        render_duration_row("Interval (min)", "##standup_int_minus", "##standup_interval", "##standup_int_plus",
+                            m_state.temp_standup_interval, 15, 120);
+        render_duration_row("Break (min)", "##standup_dur_minus", "##standup_duration", "##standup_dur_plus",
+                            m_state.temp_standup_duration, 1, 15);
+
+        // Eye care settings
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.6f, 1.0f));
+        ImGui::Text(ICON_FA_EYE " Eye Care (20-20-20)");
+        ImGui::PopStyleColor();
+        render_duration_row("Interval (min)", "##eye_int_minus", "##eye_interval", "##eye_int_plus",
+                            m_state.temp_eye_interval, 10, 60);
+        render_duration_row("Break (sec)", "##eye_dur_minus", "##eye_duration", "##eye_dur_plus",
+                            m_state.temp_eye_break_duration, 10, 60);
+
+        ImGui::PopStyleColor(7);
+        ImGui::PopStyleVar(2);
+
+        ImGui::Spacing();
         ImGui::Spacing();
 
         constexpr float button_width = 120.0f;
@@ -313,6 +521,11 @@ void MainWindowView::renderSettingsPopup() {
             if (m_callbacks.onDurationsApplied) {
                 m_callbacks.onDurationsApplied(m_state.temp_pomodoro_duration, m_state.temp_short_break_duration,
                                                m_state.temp_long_break_duration);
+            }
+            if (m_callbacks.onWellnessSettingsApplied) {
+                m_callbacks.onWellnessSettingsApplied(m_state.temp_water_interval, m_state.temp_water_daily_goal,
+                                                      m_state.temp_standup_interval, m_state.temp_standup_duration,
+                                                      m_state.temp_eye_interval, m_state.temp_eye_break_duration);
             }
             ImGui::CloseCurrentPopup();
         }
@@ -521,26 +734,35 @@ void MainWindowView::renderHelpPopup() {
         m_state.show_help = false;
     }
 
+    // Center the popup on screen
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 12.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(25.0f, 25.0f));
     ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.95f, 0.95f, 0.95f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 
     if (ImGui::BeginPopupModal("Help & Guide", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
-        constexpr float content_width = 500.0f;
+                               ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
+                                   ImGuiWindowFlags_NoMove)) {
+        // Use a dummy to establish minimum width, then get actual available width
+        ImGui::Dummy(ImVec2(500.0f, 0.0f));
+        const float content_width = ImGui::GetContentRegionAvail().x;
 
+        // Title and close button on same line
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        ImGui::SetCursorPosX(((content_width - ImGui::CalcTextSize("Work Balance - Help & Guide").x) * 0.5f) + 25.0f);
+        ImGui::SetCursorPosX((content_width - ImGui::CalcTextSize("Work Balance - Help & Guide").x) * 0.5f + 25.0f);
         ImGui::Text("Work Balance - Help & Guide");
         ImGui::PopStyleColor();
 
+        // Close button in top-right corner (same line as title)
         ImGui::SameLine();
-        ImGui::SetCursorPosX(content_width - 5.0f);
+        ImGui::SetCursorPosX(content_width - 15.0f);
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.2f, 0.2f, 0.3f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
-        if (ImGui::Button(ICON_FA_TIMES, ImVec2(40.0f, 40.0f))) {
+        if (ImGui::Button(ICON_FA_TIMES "##help_close", ImVec2(40.0f, 40.0f))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::PopStyleColor(3);
@@ -549,8 +771,7 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-
+        // Keyboard Shortcuts
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
         ImGui::Text(ICON_FA_KEYBOARD " Keyboard Shortcuts");
         ImGui::PopStyleColor();
@@ -561,6 +782,7 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Spacing();
         ImGui::Spacing();
 
+        // Timer Modes
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
         ImGui::Text(ICON_FA_CLOCK " Timer Modes");
         ImGui::PopStyleColor();
@@ -572,6 +794,7 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Spacing();
         ImGui::Spacing();
 
+        // Managing Tasks
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
         ImGui::Text(ICON_FA_TASKS " Managing Tasks");
         ImGui::PopStyleColor();
@@ -584,6 +807,41 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Spacing();
         ImGui::Spacing();
 
+        // Wellness Features
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.6f, 0.9f, 1.0f));
+        ImGui::Text(ICON_FA_TINT " Hydration Reminders");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+
+        ImGui::BulletText("Get periodic reminders to drink water");
+        ImGui::BulletText("Track daily water intake with visual progress");
+        ImGui::BulletText("Customize reminder intervals in Settings");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.5f, 0.9f, 1.0f));
+        ImGui::Text(ICON_FA_WALKING " Stand Up Reminders");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+
+        ImGui::BulletText("Reminds you to stand and stretch periodically");
+        ImGui::BulletText("Customize interval and break duration");
+        ImGui::BulletText("Helps reduce sedentary time during work");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.6f, 1.0f));
+        ImGui::Text(ICON_FA_EYE " Eye Care (20-20-20 Rule)");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+
+        ImGui::BulletText("Every 20 minutes, look at something 20 feet away");
+        ImGui::BulletText("Hold focus for 20 seconds to reduce eye strain");
+        ImGui::BulletText("Customize interval in Settings");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // Overlay Mode
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
         ImGui::Text(ICON_FA_WINDOW_MAXIMIZE " Overlay Mode");
         ImGui::PopStyleColor();
@@ -595,6 +853,7 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Spacing();
         ImGui::Spacing();
 
+        // Settings
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
         ImGui::Text(ICON_FA_COG " Settings");
         ImGui::PopStyleColor();
@@ -602,6 +861,7 @@ void MainWindowView::renderHelpPopup() {
 
         ImGui::BulletText("Click the gear icon to customize timer durations");
         ImGui::BulletText("Adjust Pomodoro, Short Break, and Long Break times");
+        ImGui::BulletText("Configure wellness reminder intervals");
         ImGui::Spacing();
         ImGui::Spacing();
 
@@ -609,9 +869,10 @@ void MainWindowView::renderHelpPopup() {
         ImGui::Spacing();
 
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        ImGui::TextWrapped("Work Balance helps you stay productive using the Pomodoro technique with a modern,"
-                           " distraction-free interface. Customize timer durations, manage tasks, and use overlay"
-                           " mode for focused work sessions.");
+        ImGui::TextWrapped(
+            "Work Balance helps you stay productive using the Pomodoro technique while caring for your health. "
+            "Features include customizable timers, task management, overlay mode, and wellness reminders for "
+            "hydration, movement, and eye care.");
         ImGui::PopStyleColor();
 
         ImGui::Spacing();
@@ -623,7 +884,6 @@ void MainWindowView::renderHelpPopup() {
         ImGui::PopStyleColor();
 
         ImGui::EndPopup();
-        ImGui::PopStyleColor();
     }
 
     ImGui::PopStyleColor(2);

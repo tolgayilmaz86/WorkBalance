@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.21)
 
-# Set vcpkg toolchain file
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+# Set vcpkg toolchain file - use VCPKG_ROOT environment variable if available
+if(DEFINED ENV{VCPKG_ROOT})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+else()
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+endif()
 
 project(WorkBalance VERSION 1.0.0 LANGUAGES CXX)
 
@@ -9,6 +13,11 @@ project(WorkBalance VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Add /FS flag for MSVC to fix parallel compilation PDB file access issues
+if(MSVC)
+    add_compile_options(/FS)
+endif()
 
 # Find required packages
 find_package(glfw3 CONFIG REQUIRED)
@@ -82,8 +91,11 @@ if(WIN32)
     src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp
+    src/core/WellnessTimer.cpp
     src/app/ui/MainWindowView.cpp
     src/app/ui/OverlayView.cpp
+    src/app/ui/WellnessViews.cpp
+    src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp
     src/system/StbImage.cpp
@@ -114,8 +126,11 @@ else()
     src/core/Persistence.cpp
     src/core/Task.cpp
     src/core/Timer.cpp
+    src/core/WellnessTimer.cpp
     src/app/ui/MainWindowView.cpp
     src/app/ui/OverlayView.cpp
+    src/app/ui/WellnessViews.cpp
+    src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp
     src/system/StbImage.cpp

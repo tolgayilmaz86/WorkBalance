@@ -3,6 +3,7 @@
 #include "../core/Configuration.h"
 #include "../core/Timer.h"
 #include "../core/Task.h"
+#include "../core/WellnessTypes.h"
 #include "../system/IAudioService.h"
 #include "../system/MainWindow.h"
 #include <imgui.h>
@@ -12,6 +13,15 @@
 #include <iomanip>
 
 namespace WorkBalance {
+
+/// @brief Navigation tabs for the side menu
+enum class NavigationTab {
+    Pomodoro, ///< Focus timer with tasks
+    Water,    ///< Hydration reminders
+    Standup,  ///< Stand up and move reminders
+    EyeCare   ///< Eye strain prevention (20-20-20 rule)
+};
+
 // Application State - Aggregation of domain models
 struct AppState {
     bool show_settings = false;
@@ -20,6 +30,10 @@ struct AppState {
     bool show_add_task = false;
     bool show_timer_overlay = false;
     bool main_window_overlay_mode = false;
+
+    // Navigation state
+    NavigationTab active_tab = NavigationTab::Pomodoro;
+    bool tab_menu_expanded = true; // For future collapse functionality
 
     // Dragging states
     bool main_window_dragging = false;
@@ -36,10 +50,22 @@ struct AppState {
     int edit_task_estimated_pomodoros = 1;
     int edit_task_completed_pomodoros = 0;
 
-    // Settings editing
+    // Settings editing - Pomodoro
     int temp_pomodoro_duration = 25;
     int temp_short_break_duration = 5;
     int temp_long_break_duration = 15;
+
+    // Settings editing - Water
+    int temp_water_interval = 30;  // minutes
+    int temp_water_daily_goal = 8; // glasses
+
+    // Settings editing - Standup
+    int temp_standup_interval = 45; // minutes
+    int temp_standup_duration = 5;  // minutes
+
+    // Settings editing - Eye Care
+    int temp_eye_interval = 20;       // minutes
+    int temp_eye_break_duration = 20; // seconds
 
     // UI state
     int current_task_index = 0;
@@ -48,6 +74,12 @@ struct AppState {
     // Pomodoro counters cached from domain layer
     int target_pomodoros = 0;
     int completed_pomodoros = 0;
+
+    // Wellness counters cached from domain layer
+    int water_glasses_consumed = 0;
+    int water_daily_goal = 8;
+    int standups_completed = 0;
+    int eye_breaks_completed = 0;
 };
 
 // Utility class for time formatting

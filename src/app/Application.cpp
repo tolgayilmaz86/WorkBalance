@@ -19,6 +19,8 @@
 #include <core/Persistence.h>
 #include <core/Task.h>
 #include <core/Timer.h>
+#include <core/WellnessTimer.h>
+#include <core/WellnessTypes.h>
 #include <system/AudioManager.h>
 #include <system/MainWindow.h>
 #include <system/OverlayWindow.h>
@@ -74,19 +76,24 @@ class Application::Impl {
   private:
     void setupCallbacks();
     void updateTimer();
+    void updateWellnessTimers();
     void handleTimerComplete();
+    void handleWellnessTimerComplete(Core::WellnessType type);
     void updateOverlayState();
     void renderOverlayFrame();
     [[nodiscard]] bool shouldRenderOverlay() const noexcept;
     [[nodiscard]] bool isValidTaskIndex(size_t index) const noexcept;
     void adjustCurrentTaskIndex() noexcept;
     void updatePomodoroCounters();
+    void updateWellnessCounters();
     void resetTimer();
     void setTimerMode(Core::TimerMode mode);
     void toggleTimer();
     void toggleOverlayMode();
     void requestClose();
     void applyDurations(int pomodoro_minutes, int short_break_minutes, int long_break_minutes);
+    void applyWellnessSettings(int water_interval, int water_goal, int standup_interval, int standup_duration,
+                               int eye_interval, int eye_break);
     void addTask(std::string_view name, int estimated);
     void removeTask(size_t index);
     void updateTask(size_t index, std::string_view name, int estimated, int completed);
@@ -98,6 +105,20 @@ class Application::Impl {
     void initializeSystemTray();
     void updateSystemTrayState();
     void showWindow();
+    void setupWellnessCallbacks();
+
+    // Wellness timer controls
+    void toggleWaterTimer();
+    void acknowledgeWater();
+    void resetWaterDaily();
+    void toggleStandupTimer();
+    void acknowledgeStandup();
+    void startStandupBreak();
+    void endStandupBreak();
+    void toggleEyeCareTimer();
+    void acknowledgeEyeCare();
+    void startEyeCareBreak();
+    void endEyeCareBreak();
 
     template <typename Callback>
     void withAudio(Callback&& callback) {
@@ -124,11 +145,16 @@ class Application::Impl {
     AppState m_state;
     UI::MainWindowView m_main_view;
     UI::OverlayView m_overlay_view;
+
+    // Wellness timers
+    std::unique_ptr<Core::WellnessTimer> m_water_timer;
+    std::unique_ptr<Core::WellnessTimer> m_standup_timer;
+    std::unique_ptr<Core::WellnessTimer> m_eye_care_timer;
 };
 
 Application::Impl::Impl()
     : m_window(getWindowWidth(), getWindowHeight(), Core::Configuration::WINDOW_TITLE), m_imgui_layer(m_window.get()),
-      m_overlay_window(), m_audio(System::createAudioService()),
+      m_overlay_window(m_window.get()), m_audio(System::createAudioService()),
       m_timer(Core::Configuration::DEFAULT_POMODORO_DURATION, Core::Configuration::DEFAULT_SHORT_BREAK_DURATION,
               Core::Configuration::DEFAULT_LONG_BREAK_DURATION),
       m_persistence(),
@@ -141,15 +167,37 @@ Application::Impl::Impl()
               .onRequestClose = [this]() { requestClose(); },
               .onDurationsApplied = [this](int pomodoro, int short_break,
                                            int long_break) { applyDurations(pomodoro, short_break, long_break); },
+              .onWellnessSettingsApplied =
+                  [this](int water_interval, int water_goal, int standup_interval, int standup_duration,
+                         int eye_interval, int eye_break) {
+                      applyWellnessSettings(water_interval, water_goal, standup_interval, standup_duration,
+                                            eye_interval, eye_break);
+                  },
               .onTaskAdded = [this](std::string_view name, int estimated) { addTask(name, estimated); },
               .onTaskRemoved = [this](size_t index) { removeTask(index); },
               .onTaskUpdated = [this](size_t index, std::string_view name, int estimated,
                                       int completed) { updateTask(index, name, estimated, completed); },
-              .onTaskCompletionToggled = [this](size_t index) { toggleTaskCompletion(index); }}),
-      m_overlay_view(m_imgui_layer, m_timer, m_state) {
+              .onTaskCompletionToggled = [this](size_t index) { toggleTaskCompletion(index); },
+              .onTabChanged = [this](WorkBalance::NavigationTab /*tab*/) { /* Background color handled in view */ }}),
+      m_overlay_view(m_imgui_layer, m_timer, m_state),
+      m_water_timer(std::make_unique<Core::WellnessTimer>(Core::WellnessType::Water,
+                                                          Core::WellnessDefaults::DEFAULT_WATER_INTERVAL)),
+      m_standup_timer(std::make_unique<Core::WellnessTimer>(Core::WellnessType::Standup,
+                                                            Core::WellnessDefaults::DEFAULT_STANDUP_INTERVAL,
+                                                            Core::WellnessDefaults::DEFAULT_STANDUP_DURATION)),
+      m_eye_care_timer(std::make_unique<Core::WellnessTimer>(Core::WellnessType::EyeStrain,
+                                                             Core::WellnessDefaults::DEFAULT_EYE_INTERVAL,
+                                                             Core::WellnessDefaults::DEFAULT_EYE_BREAK_DURATION)) {
+
+    // Set up wellness timers in the view
+    m_main_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
+    m_overlay_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
+    setupWellnessCallbacks();
+
     loadPersistedData();
     m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
     updatePomodoroCounters();
+    updateWellnessCounters();
     updateWindowTitle(m_timer.getRemainingTime());
     setupCallbacks();
     initializeSystemTray();
@@ -177,6 +225,7 @@ void Application::Impl::run() {
         glfwPollEvents();
         m_system_tray.processMessages();
         updateTimer();
+        updateWellnessTimers();
         updateSystemTrayState();
 
         m_imgui_layer.newFrame();
@@ -205,7 +254,17 @@ void Application::Impl::renderOverlayFrame() {
     }
 
     ScopedGLFWContext overlay_context(m_overlay_window.get());
+
+    // Update window size BEFORE starting ImGui frame - returns the target size
+    const auto [target_width, target_height] = m_overlay_view.updateWindowSize(m_overlay_window);
+
     m_imgui_layer.newFrame();
+
+    // Use the target size directly for ImGui (GLFW resize may be async on Windows)
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize = ImVec2(static_cast<float>(target_width), static_cast<float>(target_height));
+    io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+
     m_overlay_view.renderContent(m_overlay_window);
     m_overlay_view.renderFrame(m_overlay_window);
     m_overlay_window.swapBuffers();
@@ -318,6 +377,24 @@ void Application::Impl::applyDurations(int pomodoro_minutes, int short_break_min
 
     if (m_timer.getState() == Core::TimerState::Stopped) {
         resetTimer();
+    }
+}
+
+void Application::Impl::applyWellnessSettings(int water_interval, int water_goal, int standup_interval,
+                                              int standup_duration, int eye_interval, int eye_break) {
+    if (m_water_timer) {
+        m_water_timer->setIntervalSeconds(water_interval * 60);
+    }
+    m_state.water_daily_goal = water_goal;
+
+    if (m_standup_timer) {
+        m_standup_timer->setIntervalSeconds(standup_interval * 60);
+        m_standup_timer->setBreakDurationSeconds(standup_duration * 60);
+    }
+
+    if (m_eye_care_timer) {
+        m_eye_care_timer->setIntervalSeconds(eye_interval * 60);
+        m_eye_care_timer->setBreakDurationSeconds(eye_break);
     }
 }
 
@@ -470,6 +547,162 @@ void Application::Impl::updateSystemTrayState() {
 void Application::Impl::showWindow() {
     glfwShowWindow(m_window.get());
     glfwFocusWindow(m_window.get());
+}
+
+// ============================================================================
+// Wellness Timer Methods
+// ============================================================================
+
+void Application::Impl::setupWellnessCallbacks() {
+    m_main_view.setWellnessCallbacks(UI::WellnessCallbacks{.onWaterToggle = [this]() { toggleWaterTimer(); },
+                                                           .onWaterAcknowledge = [this]() { acknowledgeWater(); },
+                                                           .onWaterResetDaily = [this]() { resetWaterDaily(); },
+
+                                                           .onStandupToggle = [this]() { toggleStandupTimer(); },
+                                                           .onStandupAcknowledge = [this]() { acknowledgeStandup(); },
+                                                           .onStandupStartBreak = [this]() { startStandupBreak(); },
+                                                           .onStandupEndBreak = [this]() { endStandupBreak(); },
+
+                                                           .onEyeCareToggle = [this]() { toggleEyeCareTimer(); },
+                                                           .onEyeCareAcknowledge = [this]() { acknowledgeEyeCare(); },
+                                                           .onEyeCareStartBreak = [this]() { startEyeCareBreak(); },
+                                                           .onEyeCareEndBreak = [this]() { endEyeCareBreak(); }});
+}
+
+void Application::Impl::updateWellnessTimers() {
+    if (m_water_timer && m_water_timer->update()) {
+        handleWellnessTimerComplete(Core::WellnessType::Water);
+    }
+    if (m_standup_timer && m_standup_timer->update()) {
+        handleWellnessTimerComplete(Core::WellnessType::Standup);
+    }
+    if (m_eye_care_timer && m_eye_care_timer->update()) {
+        handleWellnessTimerComplete(Core::WellnessType::EyeStrain);
+    }
+
+    updateWellnessCounters();
+}
+
+void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
+    withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
+
+    // For timers with breaks, the completion is handled differently
+    switch (type) {
+        case Core::WellnessType::Water:
+            // Water reminder - just notify user
+            break;
+        case Core::WellnessType::Standup:
+            // If break completed, restart interval timer
+            if (m_standup_timer && !m_standup_timer->isInBreak()) {
+                m_standup_timer->start();
+            }
+            break;
+        case Core::WellnessType::EyeStrain:
+            // If break completed, restart interval timer
+            if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {
+                m_eye_care_timer->start();
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void Application::Impl::updateWellnessCounters() {
+    if (m_water_timer) {
+        m_state.water_glasses_consumed = m_water_timer->getCompletedCount();
+    }
+    if (m_standup_timer) {
+        m_state.standups_completed = m_standup_timer->getCompletedCount();
+    }
+    if (m_eye_care_timer) {
+        m_state.eye_breaks_completed = m_eye_care_timer->getCompletedCount();
+    }
+}
+
+void Application::Impl::toggleWaterTimer() {
+    if (m_water_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_water_timer->toggle();
+    }
+}
+
+void Application::Impl::acknowledgeWater() {
+    if (m_water_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_water_timer->acknowledgeReminder();
+        updateWellnessCounters();
+    }
+}
+
+void Application::Impl::resetWaterDaily() {
+    if (m_water_timer) {
+        m_water_timer->resetDailyCounters();
+        m_water_timer->reset();
+        updateWellnessCounters();
+    }
+}
+
+void Application::Impl::toggleStandupTimer() {
+    if (m_standup_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_standup_timer->toggle();
+    }
+}
+
+void Application::Impl::acknowledgeStandup() {
+    if (m_standup_timer) {
+        // Skip this reminder
+        m_standup_timer->acknowledgeReminder();
+        m_standup_timer->reset();
+        m_standup_timer->start();
+    }
+}
+
+void Application::Impl::startStandupBreak() {
+    if (m_standup_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_standup_timer->startBreak();
+    }
+}
+
+void Application::Impl::endStandupBreak() {
+    if (m_standup_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_standup_timer->endBreak();
+        updateWellnessCounters();
+    }
+}
+
+void Application::Impl::toggleEyeCareTimer() {
+    if (m_eye_care_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_eye_care_timer->toggle();
+    }
+}
+
+void Application::Impl::acknowledgeEyeCare() {
+    if (m_eye_care_timer) {
+        // Skip this reminder
+        m_eye_care_timer->acknowledgeReminder();
+        m_eye_care_timer->reset();
+        m_eye_care_timer->start();
+    }
+}
+
+void Application::Impl::startEyeCareBreak() {
+    if (m_eye_care_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_eye_care_timer->startBreak();
+    }
+}
+
+void Application::Impl::endEyeCareBreak() {
+    if (m_eye_care_timer) {
+        withAudio([](System::IAudioService& audio) { audio.playClickSound(); });
+        m_eye_care_timer->endBreak();
+        updateWellnessCounters();
+    }
 }
 
 Application::Application() : m_impl(std::make_unique<Application::Impl>()) {
