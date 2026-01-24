@@ -103,6 +103,24 @@ class TimeFormatter {
 
         return result;
     }
+
+    /// @brief Formats timer display string with mode icon
+    /// @param mode The current timer mode
+    /// @param remaining_seconds The remaining time in seconds
+    /// @return Formatted string with icon and time (e.g., "🕐  25:00")
+    [[nodiscard]] static std::string formatTimerWithIcon(Core::TimerMode mode, int remaining_seconds) {
+        const char* icon = nullptr;
+        switch (mode) {
+            case Core::TimerMode::Pomodoro:
+                icon = "\xef\x80\x97"; // ICON_FA_CLOCK (U+f017)
+                break;
+            case Core::TimerMode::ShortBreak:
+            case Core::TimerMode::LongBreak:
+                icon = "\xef\x83\xb4"; // ICON_FA_COFFEE (U+f0f4)
+                break;
+        }
+        return std::string(icon) + "  " + formatTime(remaining_seconds);
+    }
 };
 
 // Theme manager for handling background colors

@@ -28,20 +28,20 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
         const float window_width = ImGui::GetWindowSize().x;
         const float window_height = ImGui::GetWindowSize().y;
 
-        std::string time_str = WorkBalance::TimeFormatter::formatTime(m_timer.getRemainingTime());
-        ImVec2 text_size = ImGui::CalcTextSize(time_str.c_str());
+        const std::string display_str =
+            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
 
-        constexpr float text_scale = 2.0f;
-        text_size.x *= text_scale;
-        text_size.y *= text_scale;
+        // Use overlay font which has icons merged
+        ImFont* overlay_font = m_imgui.overlayFont();
+        ImGui::PushFont(overlay_font);
+        ImVec2 text_size = ImGui::CalcTextSize(display_str.c_str());
 
         ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
 
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-        ImGui::SetWindowFontScale(text_scale);
-        ImGui::Text("%s", time_str.c_str());
-        ImGui::SetWindowFontScale(1.0f);
+        ImGui::Text("%s", display_str.c_str());
         ImGui::PopStyleColor();
+        ImGui::PopFont();
 
         GLFWwindow* handle = overlay_window.get();
         if (handle != nullptr) {

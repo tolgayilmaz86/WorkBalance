@@ -64,9 +64,8 @@ void ImGuiLayer::loadFonts(ImGuiIO& io) {
 
     const auto addFont = [&](ImFontConfig config, const unsigned char* data, size_t data_size, float font_size,
                              std::string_view warning, const ImWchar* ranges = nullptr) -> ImFont* {
-        ImFont* font =
-            io.Fonts->AddFontFromMemoryTTF(static_cast<void*>(const_cast<unsigned char*>(data)),
-                                           static_cast<int>(data_size), font_size, &config, ranges);
+        ImFont* font = io.Fonts->AddFontFromMemoryTTF(static_cast<void*>(const_cast<unsigned char*>(data)),
+                                                      static_cast<int>(data_size), font_size, &config, ranges);
 
         if (font == nullptr && !warning.empty()) {
             std::cerr << "Warning: " << warning << '\n';
@@ -75,9 +74,9 @@ void ImGuiLayer::loadFonts(ImGuiIO& io) {
     };
 
     ImFontConfig roboto_config = base_config;
-    m_large_font = addFont(roboto_config, roboto_medium_data, roboto_medium_data_size,
-                           Core::Configuration::REGULAR_FONT_SIZE,
-                           "Failed to load embedded Roboto font. Using default font.");
+    m_large_font =
+        addFont(roboto_config, roboto_medium_data, roboto_medium_data_size, Core::Configuration::REGULAR_FONT_SIZE,
+                "Failed to load embedded Roboto font. Using default font.");
     if (m_large_font == nullptr) {
         m_large_font = io.Fonts->AddFontDefault();
     }
@@ -97,6 +96,14 @@ void ImGuiLayer::loadFonts(ImGuiIO& io) {
                             Core::Configuration::BUTTON_FONT_SIZE, "Failed to load embedded Formula1-Wide font");
     m_overlay_font = addFont(formula_config, formula1_regular_data, formula1_regular_data_size,
                              Core::Configuration::OVERLAY_FONT_SIZE, "Failed to load embedded Formula1-Regular font");
+
+    // Add icons to overlay font
+    ImFontConfig overlay_icons_config = base_config;
+    overlay_icons_config.MergeMode = true;
+    overlay_icons_config.PixelSnapH = true;
+    overlay_icons_config.GlyphMinAdvanceX = Core::Configuration::OVERLAY_FONT_SIZE;
+    addFont(overlay_icons_config, fontawesome_data, fontawesome_data_size, Core::Configuration::OVERLAY_FONT_SIZE,
+            "Failed to load embedded FontAwesome for overlay", icons_ranges);
 
     if (!io.Fonts->Build()) {
         std::cerr << "Error: Failed to build ImGui font atlas\n";

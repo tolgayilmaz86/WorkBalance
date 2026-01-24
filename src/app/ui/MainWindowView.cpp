@@ -285,15 +285,16 @@ void MainWindowView::renderOverlayMode() {
     const float window_width = ImGui::GetWindowSize().x;
     const float window_height = ImGui::GetWindowSize().y;
 
-    const std::string time_text = WorkBalance::TimeFormatter::formatTime(m_timer.getRemainingTime());
+    const std::string display_str =
+        WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
     ImFont* overlay_font = m_imgui.overlayFont();
-    const ImVec2 text_size = calculateTextSize(overlay_font, time_text);
+    const ImVec2 text_size = calculateTextSize(overlay_font, display_str);
 
     ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     {
         ScopedFont font_scope(overlay_font);
-        ImGui::TextUnformatted(time_text.c_str());
+        ImGui::TextUnformatted(display_str.c_str());
     }
     ImGui::PopStyleColor();
 

@@ -125,7 +125,7 @@ void setIcon(GLFWwindow* window) {
 }
 
 void applyOverlaySize(GLFWwindow* window, const MonitorData& monitor) {
-    constexpr int overlay_width = 150;
+    constexpr int overlay_width = 200;
     constexpr int overlay_height = 70;
     sizeWindow(window, overlay_width, overlay_height);
 
