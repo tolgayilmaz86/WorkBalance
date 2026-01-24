@@ -12,6 +12,65 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
                                            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                                            ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 
+    // Count active wellness timers to decide format
+    int active_wellness_count = 0;
+    if (m_water_timer && m_water_timer->isRunning())
+        active_wellness_count++;
+    if (m_standup_timer && m_standup_timer->isRunning())
+        active_wellness_count++;
+    if (m_eye_care_timer && m_eye_care_timer->isRunning())
+        active_wellness_count++;
+
+    // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
+    // Use compact format for all timers when multiple are active
+    std::string display_str;
+    if (active_wellness_count > 0) {
+        // Multiple timers - use compact format for all (no seconds)
+        display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
+                                                                             m_timer.getRemainingTime());
+    } else {
+        // Single timer - show full format with seconds
+        display_str =
+            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+    }
+
+    // Add wellness timers if they exist and are running
+    if (m_water_timer && m_water_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
+    }
+    if (m_standup_timer && m_standup_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
+    }
+    if (m_eye_care_timer && m_eye_care_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
+    }
+
+    // Calculate required window size based on text
+    ImFont* overlay_font = m_imgui.overlayFont();
+    ImGui::PushFont(overlay_font);
+    ImVec2 text_size = ImGui::CalcTextSize(display_str.c_str());
+    ImGui::PopFont();
+
+    constexpr float padding_x = 40.0f; // Horizontal padding
+    constexpr float padding_y = 20.0f; // Vertical padding
+    const int required_width = static_cast<int>(text_size.x + padding_x);
+    const int required_height = static_cast<int>(text_size.y + padding_y);
+
+    // Resize window if needed
+    const auto [current_width, current_height] = overlay_window.getFramebufferSize();
+    if (current_width != required_width || current_height != required_height) {
+        overlay_window.setSize(required_width, required_height);
+    }
+
     const auto [overlay_width, overlay_height] = overlay_window.getFramebufferSize();
     ImGui::SetNextWindowPos(m_state.overlay_position, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(overlay_width), static_cast<float>(overlay_height)));
@@ -28,13 +87,8 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
         const float window_width = ImGui::GetWindowSize().x;
         const float window_height = ImGui::GetWindowSize().y;
 
-        const std::string display_str =
-            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
-
         // Use overlay font which has icons merged
-        ImFont* overlay_font = m_imgui.overlayFont();
         ImGui::PushFont(overlay_font);
-        ImVec2 text_size = ImGui::CalcTextSize(display_str.c_str());
 
         ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
 

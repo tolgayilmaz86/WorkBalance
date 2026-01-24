@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 namespace WorkBalance::System {
-constexpr int DEFAULT_WIDTH = 200;
+constexpr int DEFAULT_WIDTH = 600;
 constexpr int DEFAULT_HEIGHT = 80;
 constexpr int START_X = 100;
 constexpr int START_Y = 100;

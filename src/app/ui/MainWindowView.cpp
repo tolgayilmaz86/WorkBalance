@@ -282,13 +282,66 @@ void MainWindowView::renderEyeCareContent() {
 }
 
 void MainWindowView::renderOverlayMode() {
-    const float window_width = ImGui::GetWindowSize().x;
-    const float window_height = ImGui::GetWindowSize().y;
+    // Count active wellness timers to decide format
+    int active_wellness_count = 0;
+    if (m_water_timer && m_water_timer->isRunning())
+        active_wellness_count++;
+    if (m_standup_timer && m_standup_timer->isRunning())
+        active_wellness_count++;
+    if (m_eye_care_timer && m_eye_care_timer->isRunning())
+        active_wellness_count++;
 
-    const std::string display_str =
-        WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+    // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
+    // Use compact format for all timers when multiple are active
+    std::string display_str;
+    if (active_wellness_count > 0) {
+        // Multiple timers - use compact format for all (no seconds)
+        display_str = WorkBalance::TimeFormatter::formatTimerWithIconCompact(m_timer.getCurrentMode(),
+                                                                             m_timer.getRemainingTime());
+    } else {
+        // Single timer - show full format with seconds
+        display_str =
+            WorkBalance::TimeFormatter::formatTimerWithIcon(m_timer.getCurrentMode(), m_timer.getRemainingTime());
+    }
+
+    // Add wellness timers if they exist and are running
+    if (m_water_timer && m_water_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
+    }
+    if (m_standup_timer && m_standup_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
+    }
+    if (m_eye_care_timer && m_eye_care_timer->isRunning()) {
+        display_str += "  |  ";
+        display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
+        display_str += " ";
+        display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
+    }
+
     ImFont* overlay_font = m_imgui.overlayFont();
     const ImVec2 text_size = calculateTextSize(overlay_font, display_str);
+
+    // Dynamically resize window based on content
+    constexpr float padding_x = 40.0f;
+    constexpr float padding_y = 20.0f;
+    const int required_width = static_cast<int>(text_size.x + padding_x);
+    const int required_height = static_cast<int>(text_size.y + padding_y);
+
+    int current_width = 0;
+    int current_height = 0;
+    glfwGetWindowSize(m_window.get(), &current_width, &current_height);
+    if (current_width != required_width || current_height != required_height) {
+        glfwSetWindowSize(m_window.get(), required_width, required_height);
+    }
+
+    const float window_width = ImGui::GetWindowSize().x;
+    const float window_height = ImGui::GetWindowSize().y;
 
     ImGui::SetCursorPos(ImVec2((window_width - text_size.x) * 0.5f, (window_height - text_size.y) * 0.5f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));

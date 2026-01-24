@@ -65,4 +65,10 @@ void WindowBase::setPosition(int x, int y) noexcept {
     }
 }
 
+void WindowBase::setSize(int width, int height) noexcept {
+    if (m_window != nullptr) {
+        glfwSetWindowSize(m_window, width, height);
+    }
+}
+
 } // namespace WorkBalance::System

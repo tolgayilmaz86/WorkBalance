@@ -104,6 +104,20 @@ class TimeFormatter {
         return result;
     }
 
+    /// @brief Formats time in compact form (e.g., "45m" or "2:30" if under 10 min)
+    [[nodiscard]] static std::string formatTimeCompact(int seconds) {
+        if (seconds < 0)
+            seconds = 0;
+
+        int minutes = seconds / 60;
+        int secs = seconds % 60;
+
+        if (minutes >= 10) {
+            return std::to_string(minutes) + "m";
+        }
+        return std::to_string(minutes) + ":" + (secs < 10 ? "0" : "") + std::to_string(secs);
+    }
+
     /// @brief Formats timer display string with mode icon
     /// @param mode The current timer mode
     /// @param remaining_seconds The remaining time in seconds
@@ -120,6 +134,38 @@ class TimeFormatter {
                 break;
         }
         return std::string(icon) + "  " + formatTime(remaining_seconds);
+    }
+
+    /// @brief Formats timer display string with mode icon in compact form (no seconds)
+    /// @param mode The current timer mode
+    /// @param remaining_seconds The remaining time in seconds
+    /// @return Formatted string with icon and compact time (e.g., "🕐 25m")
+    [[nodiscard]] static std::string formatTimerWithIconCompact(Core::TimerMode mode, int remaining_seconds) {
+        const char* icon = nullptr;
+        switch (mode) {
+            case Core::TimerMode::Pomodoro:
+                icon = "\xef\x80\x97"; // ICON_FA_CLOCK (U+f017)
+                break;
+            case Core::TimerMode::ShortBreak:
+            case Core::TimerMode::LongBreak:
+                icon = "\xef\x83\xb4"; // ICON_FA_COFFEE (U+f0f4)
+                break;
+        }
+        return std::string(icon) + "  " + formatTimeCompact(remaining_seconds);
+    }
+
+    /// @brief Gets icon for wellness timer type
+    [[nodiscard]] static const char* getWellnessIcon(Core::WellnessType type) {
+        switch (type) {
+            case Core::WellnessType::Water:
+                return "\xef\x81\x83"; // ICON_FA_TINT (U+f043)
+            case Core::WellnessType::Standup:
+                return "\xef\x95\x94"; // ICON_FA_WALKING (U+f554)
+            case Core::WellnessType::EyeStrain:
+                return "\xef\x81\xae"; // ICON_FA_EYE (U+f06e)
+            default:
+                return "\xef\x80\x97"; // ICON_FA_CLOCK
+        }
     }
 };
 

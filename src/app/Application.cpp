@@ -189,8 +189,9 @@ Application::Impl::Impl()
                                                              Core::WellnessDefaults::DEFAULT_EYE_INTERVAL,
                                                              Core::WellnessDefaults::DEFAULT_EYE_BREAK_DURATION)) {
 
-    // Set up wellness timers in the view
+    // Set up wellness timers in the views
     m_main_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
+    m_overlay_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
     setupWellnessCallbacks();
 
     loadPersistedData();

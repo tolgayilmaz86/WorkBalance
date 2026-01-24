@@ -33,6 +33,8 @@ class WindowBase {
 
     void setPosition(int x, int y) noexcept;
 
+    void setSize(int width, int height) noexcept;
+
   protected:
     GLFWwindow* m_window = nullptr;
 };

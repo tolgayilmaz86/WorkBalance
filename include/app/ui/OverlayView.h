@@ -2,6 +2,7 @@
 
 #include <app/ImGuiLayer.h>
 #include <core/Timer.h>
+#include <core/WellnessTimer.h>
 #include <system/OverlayWindow.h>
 #include <ui/AppState.h>
 
@@ -10,6 +11,13 @@ class OverlayView {
   public:
     OverlayView(App::ImGuiLayer& imgui, Core::Timer& timer, AppState& state)
         : m_imgui(imgui), m_timer(timer), m_state(state) {
+    }
+
+    /// @brief Sets the wellness timers for overlay display
+    void setWellnessTimers(Core::WellnessTimer* water, Core::WellnessTimer* standup, Core::WellnessTimer* eye_care) {
+        m_water_timer = water;
+        m_standup_timer = standup;
+        m_eye_care_timer = eye_care;
     }
 
     /// @brief Renders the content of the overlay window.
@@ -24,6 +32,9 @@ class OverlayView {
     App::ImGuiLayer& m_imgui;
     Core::Timer& m_timer;
     AppState& m_state;
+    Core::WellnessTimer* m_water_timer = nullptr;
+    Core::WellnessTimer* m_standup_timer = nullptr;
+    Core::WellnessTimer* m_eye_care_timer = nullptr;
 };
 
 } // namespace WorkBalance::App::UI
