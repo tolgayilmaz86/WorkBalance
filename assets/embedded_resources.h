@@ -11,6 +11,9 @@ extern const size_t bell_wav_data_size;
 extern const unsigned char hydration_wav_data[];
 extern const size_t hydration_wav_data_size;
 
+extern const unsigned char walk_wav_data[];
+extern const size_t walk_wav_data_size;
+
 // Embedded font files
 extern const unsigned char roboto_medium_data[];
 extern const size_t roboto_medium_data_size;

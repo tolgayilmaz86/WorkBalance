@@ -50,6 +50,12 @@ embed_resource(
     "hydration_wav_data"
 )
 
+embed_resource(
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/sounds/walk.wav"
+    "${EMBEDDED_RESOURCES_DIR}/walk_wav.cpp"
+    "walk_wav_data"
+)
+
 # Embed font files
 embed_resource(
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts/Roboto-Medium.ttf"
@@ -120,6 +126,7 @@ if(WIN32)
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/hydration_wav.cpp
+        ${EMBEDDED_RESOURCES_DIR}/walk_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/roboto_medium.cpp
         ${EMBEDDED_RESOURCES_DIR}/fontawesome.cpp
         ${EMBEDDED_RESOURCES_DIR}/formula1_bold.cpp
@@ -161,6 +168,7 @@ else()
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/hydration_wav.cpp
+        ${EMBEDDED_RESOURCES_DIR}/walk_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/roboto_medium.cpp
         ${EMBEDDED_RESOURCES_DIR}/fontawesome.cpp
         ${EMBEDDED_RESOURCES_DIR}/formula1_bold.cpp

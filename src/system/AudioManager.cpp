@@ -69,6 +69,14 @@ void AudioManager::playHydrationSound() {
     playEmbeddedSound(hydration_wav_data, hydration_wav_data_size);
 }
 
+void AudioManager::playWalkSound() {
+    if (!m_initialized) {
+        return;
+    }
+
+    playEmbeddedSound(walk_wav_data, walk_wav_data_size);
+}
+
 bool AudioManager::isInitialized() const noexcept {
     return m_initialized;
 }

@@ -78,6 +78,7 @@ class WellnessController {
     void playClickSound();
     void playBellSound();
     void playHydrationSound();
+    void playWalkSound();
     void updateCounters();
 
     std::unique_ptr<Core::WellnessTimer> m_water_timer;

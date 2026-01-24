@@ -34,7 +34,8 @@ void WellnessController::handleTimerComplete(Core::WellnessType type) {
             playHydrationSound();
             break;
         case Core::WellnessType::Standup:
-            playBellSound();
+            // Standup reminder - play special walk sound
+            playWalkSound();
             // If break completed, restart interval timer
             if (m_standup_timer && !m_standup_timer->isInBreak()) {
                 m_standup_timer->start();
@@ -184,6 +185,12 @@ void WellnessController::playBellSound() {
 void WellnessController::playHydrationSound() {
     if (m_audio && m_audio->isInitialized()) {
         m_audio->playHydrationSound();
+    }
+}
+
+void WellnessController::playWalkSound() {
+    if (m_audio && m_audio->isInitialized()) {
+        m_audio->playWalkSound();
     }
 }
 
