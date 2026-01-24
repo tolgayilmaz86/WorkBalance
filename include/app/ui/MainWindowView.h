@@ -9,6 +9,9 @@
 #include <app/ui/callbacks/TaskCallbacks.h>
 #include <app/ui/callbacks/TimerCallbacks.h>
 #include <app/ui/callbacks/WindowCallbacks.h>
+#include <app/ui/components/SettingsPopup.h>
+#include <app/ui/components/TaskListPanel.h>
+#include <app/ui/components/TimerPanel.h>
 #include <core/Task.h>
 #include <core/Timer.h>
 #include <core/WellnessTimer.h>
@@ -96,13 +99,8 @@ class MainWindowView {
     void renderWaterContent();
     void renderStandupContent();
     void renderEyeCareContent();
-    void renderSettingsPopup();
     void renderEditTaskPopup();
     void renderHelpPopup();
-    void renderTaskList();
-    void renderModeButtons();
-    void renderTimer();
-    void renderTimerFrame();
     void renderCurrentTask();
     void renderPomodoroCounter() const;
     void handleWindowDragging();
@@ -125,6 +123,15 @@ class MainWindowView {
 
     // Navigation tabs component
     std::unique_ptr<WorkBalance::UI::NavigationTabs> m_navigation_tabs;
+
+    // Settings popup component
+    std::unique_ptr<Components::SettingsPopup> m_settings_popup;
+
+    // Timer panel component
+    std::unique_ptr<Components::TimerPanel> m_timer_panel;
+
+    // Task list panel component
+    std::unique_ptr<Components::TaskListPanel> m_task_list_panel;
 };
 
 } // namespace WorkBalance::App::UI

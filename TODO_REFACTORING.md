@@ -1216,10 +1216,10 @@ pomodoro_count.observe([](int old_count, int new_count) {
 - [x] Split `MainWindowCallbacks` into focused groups
 
 ### Phase 3: UI Refactoring (Week 5-6)
-- [ ] Extract `SettingsPopup` component
-- [ ] Extract `TimerPanel` component
-- [ ] Extract `TaskListPanel` component
-- [ ] Split `AppState` into focused structs
+- [x] Extract `SettingsPopup` component
+- [x] Extract `TimerPanel` component
+- [x] Extract `TaskListPanel` component
+- [x] Split `AppState` into focused structs
 
 ### Phase 4: Modernization (Week 7-8)
 - [ ] Convert to `std::format` for string formatting

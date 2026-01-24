@@ -99,6 +99,9 @@ if(WIN32)
     src/app/ui/MainWindowView.cpp
     src/app/ui/OverlayView.cpp
     src/app/ui/WellnessViews.cpp
+    src/app/ui/components/SettingsPopup.cpp
+    src/app/ui/components/TaskListPanel.cpp
+    src/app/ui/components/TimerPanel.cpp
     src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp
@@ -137,6 +140,9 @@ else()
     src/app/ui/MainWindowView.cpp
     src/app/ui/OverlayView.cpp
     src/app/ui/WellnessViews.cpp
+    src/app/ui/components/SettingsPopup.cpp
+    src/app/ui/components/TaskListPanel.cpp
+    src/app/ui/components/TimerPanel.cpp
     src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp

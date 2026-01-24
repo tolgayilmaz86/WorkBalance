@@ -22,8 +22,17 @@ enum class NavigationTab {
     EyeCare   ///< Eye strain prevention (20-20-20 rule)
 };
 
-// Application State - Aggregation of domain models
+/// @brief Application State - Aggregation of domain models
+///
+/// This struct maintains backward compatibility with direct member access.
+/// For new code, consider using the focused state structs in ui/state/:
+/// - UIState.h: UI visibility and navigation state
+/// - DragState.h: Window dragging state
+/// - SettingsEditState.h: Temporary settings editing state
+/// - TaskEditState.h: Task editing state
+/// - RuntimeCounters.h: Runtime counters and statistics
 struct AppState {
+    // ===== UI Visibility State =====
     bool show_settings = false;
     bool show_help = false;
     bool show_edit_task = false;
@@ -31,11 +40,11 @@ struct AppState {
     bool show_timer_overlay = false;
     bool main_window_overlay_mode = false;
 
-    // Navigation state
+    // ===== Navigation State =====
     NavigationTab active_tab = NavigationTab::Pomodoro;
     bool tab_menu_expanded = true; // For future collapse functionality
 
-    // Dragging states
+    // ===== Dragging States =====
     bool main_window_dragging = false;
     bool main_overlay_dragging = false;
     bool overlay_dragging = false;
@@ -49,44 +58,44 @@ struct AppState {
     int main_window_x = Core::Configuration::DEFAULT_WINDOW_POSITION;
     int main_window_y = Core::Configuration::DEFAULT_WINDOW_POSITION;
 
-    // Task editing state
+    // ===== Task Editing State =====
     int edit_task_index = -1;
     char edit_task_name[Core::Configuration::MAX_TASK_NAME_LENGTH] = "";
     int edit_task_estimated_pomodoros = Core::Configuration::DEFAULT_ESTIMATED_POMODOROS;
     int edit_task_completed_pomodoros = Core::Configuration::DEFAULT_COMPLETED_POMODOROS;
 
-    // Settings editing - Pomodoro
+    // ===== Settings Editing - Pomodoro =====
     int temp_pomodoro_duration = Core::Configuration::DEFAULT_POMODORO_MINUTES;
     int temp_short_break_duration = Core::Configuration::DEFAULT_SHORT_BREAK_MINUTES;
     int temp_long_break_duration = Core::Configuration::DEFAULT_LONG_BREAK_MINUTES;
 
-    // Settings editing - Water
+    // ===== Settings Editing - Water =====
     int temp_water_interval = Core::Configuration::DEFAULT_WATER_INTERVAL_MINUTES;
     int temp_water_daily_goal = Core::Configuration::DEFAULT_WATER_DAILY_GOAL;
 
-    // Settings editing - Standup
+    // ===== Settings Editing - Standup =====
     int temp_standup_interval = Core::Configuration::DEFAULT_STANDUP_INTERVAL_MINUTES;
     int temp_standup_duration = Core::Configuration::DEFAULT_STANDUP_DURATION_MINUTES;
 
-    // Settings editing - Eye Care
+    // ===== Settings Editing - Eye Care =====
     int temp_eye_interval = Core::Configuration::DEFAULT_EYE_INTERVAL_MINUTES;
     int temp_eye_break_duration = Core::Configuration::DEFAULT_EYE_BREAK_DURATION_SECONDS;
 
-    // UI state
+    // ===== UI State =====
     int current_task_index = 0;
     ImVec4 background_color = Core::Configuration::POMODORO_BG_COLOR;
 
-    // Pomodoro counters cached from domain layer
+    // ===== Runtime Counters (cached from domain layer) =====
     int target_pomodoros = 0;
     int completed_pomodoros = 0;
 
-    // Wellness counters cached from domain layer
+    // ===== Wellness Counters (cached from domain layer) =====
     int water_glasses_consumed = 0;
     int water_daily_goal = Core::Configuration::DEFAULT_WATER_DAILY_GOAL;
     int standups_completed = 0;
     int eye_breaks_completed = 0;
 
-    // Overlay visibility settings (which timers to show in overlay mode)
+    // ===== Overlay Visibility Settings =====
     bool show_pomodoro_in_overlay = true;
     bool show_water_in_overlay = true;
     bool show_standup_in_overlay = true;
