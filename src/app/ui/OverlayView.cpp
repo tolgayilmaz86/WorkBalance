@@ -81,7 +81,8 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
     }
 
     const auto [overlay_width, overlay_height] = overlay_window.getFramebufferSize();
-    ImGui::SetNextWindowPos(m_state.overlay_position, ImGuiCond_FirstUseEver);
+    // ImGui window fills the entire GLFW overlay window - actual position is handled by GLFW
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(overlay_width), static_cast<float>(overlay_height)));
 
     ImVec4 overlay_bg = m_state.background_color;

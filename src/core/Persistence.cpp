@@ -123,6 +123,20 @@ std::string extractJsonValue(const std::string& json, const std::string& key) {
         }
         return unescapeJsonString(json.substr(pos + 1, end_pos - pos - 1));
     }
+    if (json[pos] == '{') {
+        // Object value - find matching brace
+        int brace_count = 1;
+        auto end_pos = pos + 1;
+        while (end_pos < json.size() && brace_count > 0) {
+            if (json[end_pos] == '{') {
+                ++brace_count;
+            } else if (json[end_pos] == '}') {
+                --brace_count;
+            }
+            ++end_pos;
+        }
+        return json.substr(pos, end_pos - pos);
+    }
     if (json[pos] == '[') {
         // Array value - find matching bracket
         int bracket_count = 1;

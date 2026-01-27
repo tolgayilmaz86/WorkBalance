@@ -551,9 +551,10 @@ void Application::Impl::applyPersistedWindowPositions() {
         m_window.setPosition(m_state.main_window_x, m_state.main_window_y);
     }
 
-    // Apply overlay window position
-    m_overlay_window.setPosition(static_cast<int>(m_state.overlay_position.x),
-                                 static_cast<int>(m_state.overlay_position.y));
+    // Apply overlay window position and keep state in sync
+    const int overlay_x = static_cast<int>(m_state.overlay_position.x);
+    const int overlay_y = static_cast<int>(m_state.overlay_position.y);
+    m_overlay_window.setPosition(overlay_x, overlay_y);
 }
 
 void Application::Impl::savePersistedData() const {
@@ -565,9 +566,10 @@ void Application::Impl::savePersistedData() const {
     data.settings.short_break_duration_minutes = m_timer.getShortBreakDuration() / seconds_per_minute;
     data.settings.long_break_duration_minutes = m_timer.getLongBreakDuration() / seconds_per_minute;
 
-    // Save overlay position
-    data.settings.overlay_position_x = m_state.overlay_position.x;
-    data.settings.overlay_position_y = m_state.overlay_position.y;
+    // Save overlay position (get current position from window to ensure accuracy)
+    const auto [overlay_x, overlay_y] = m_overlay_window.getPosition();
+    data.settings.overlay_position_x = static_cast<float>(overlay_x);
+    data.settings.overlay_position_y = static_cast<float>(overlay_y);
 
     // Save main window position (get current position from window)
     const auto [win_x, win_y] = m_window.getPosition();

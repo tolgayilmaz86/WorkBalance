@@ -256,8 +256,10 @@ if(BUILD_TESTS)
         tests/TimerTest.cpp
         tests/TaskTest.cpp
         tests/TaskControllerTest.cpp
+        tests/PersistenceTest.cpp
         src/core/Timer.cpp
         src/core/Task.cpp
+        src/core/Persistence.cpp
         src/controllers/TaskController.cpp
     )
 
