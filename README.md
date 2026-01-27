@@ -2,45 +2,175 @@
 
 <div align="center">
 
-![WorkBalance Screenshot](assets/screenshots/ui_screenshot.png)
+![WorkBalance Screenshot](assets/screenshots/workbalance_pomodoro.png)
 
-**A modern, cross-platform Pomodoro timer inspired by [Pomofocus.io](https://pomofocus.io)**
+**🚀 Supercharge Your Productivity with the Ultimate Desktop Pomodoro Timer**
+
+*Stay focused. Take breaks. Achieve more.*
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](CROSS_PLATFORM.md)
-[![C++](https://img.shields.io/badge/C%2B%2B-20-00599C.svg)](https://en.cppreference.com/w/cpp/20)
+[![C++](https://img.shields.io/badge/C%2B%2B-23-00599C.svg)](https://en.cppreference.com/w/cpp/23)
 [![CMake](https://img.shields.io/badge/CMake-3.15+-064F8C.svg)](https://cmake.org/)
 [![GitHub Release](https://img.shields.io/github/v/release/tolgayilmaz86/WorkBalance)](../../releases)
+
+[Download Latest Release](../../releases) • [Report Bug](https://github.com/tolgayilmaz86/WorkBalance/issues) • [Request Feature](https://github.com/tolgayilmaz86/WorkBalance/issues)
 
 </div>
 
 ---
 
-## 🎯 About
+## 🎯 Why WorkBalance?
 
-WorkBalance is a desktop Pomodoro timer application designed to help you stay productive and focused. Inspired by the web-based [Pomofocus.io](https://pomofocus.io), it brings the simplicity and elegance of the Pomodoro Technique to a native desktop experience.
+**WorkBalance** isn't just another Pomodoro timer—it's your personal productivity companion that helps you work smarter, not harder.
+
+Inspired by the beloved [Pomofocus.io](https://pomofocus.io), WorkBalance brings the power of the Pomodoro Technique to your desktop with a beautiful native experience. No browser tabs. No distractions. Just pure, focused productivity.
+
+### 💡 The Science Behind It
+
+The Pomodoro Technique is a proven time management method that breaks work into focused intervals (typically 25 minutes) separated by short breaks. Studies show this approach:
+
+- ✅ **Reduces mental fatigue** through regular breaks
+- ✅ **Improves focus** by creating urgency
+- ✅ **Boosts motivation** with visible progress
+- ✅ **Prevents burnout** with built-in rest periods
 
 ---
 
-## ✨ Features
+## ✨ Features That Set Us Apart
 
-- 🍅 **Pomodoro Timer** - Classic 25/5/15 minute work/break intervals
-- 📝 **Task Management** - Track tasks and completed pomodoros
-- 🎨 **Modern UI** - Clean, distraction-free interface with Formula1 fonts
-- 🔊 **Audio Alerts** - Embedded sound notifications for timer events
-- 🪟 **Overlay Mode** - Compact, always-on-top timer view
-- 🌐 **Cross-Platform** - Runs on Windows, Linux, and macOS
-- 📦 **Self-Contained** - All assets embedded in the executable
+<table>
+<tr>
+<td width="50%">
+
+### 🍅 Smart Pomodoro Timer
+Classic 25/5/15 minute intervals with automatic transitions. Track your work sessions effortlessly.
+
+- Customizable durations
+- Auto-start options for breaks and pomodoros
+- Visual progress indicators
+- Audio notifications
+
+</td>
+<td width="50%">
+
+![Pomodoro Timer](assets/screenshots/workbalance_pomodoro.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Hydration Reminder](assets/screenshots/workbalance_hydration.png)
+
+</td>
+<td width="50%">
+
+### 💧 Wellness Reminders
+Stay healthy while you work! WorkBalance goes beyond productivity with built-in wellness features:
+
+- **Hydration Tracking** - Never forget to drink water
+- **Stand-up Reminders** - Combat sedentary work habits
+- **Eye Care Alerts** - 20-20-20 rule for eye health
+- Auto-loop timers for continuous reminders
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🪟 Always-On-Top Overlay
+A sleek, minimal overlay that stays visible while you work. See your timer without switching windows.
+
+- Transparent, draggable design
+- Shows active timers at a glance
+- Doesn't steal focus
+- Toggle visibility per timer type
+
+</td>
+<td width="50%">
+
+![Overlay Mode](assets/screenshots/workbalance_overlay.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+![Settings](assets/screenshots/workbalance_settings.png)
+
+</td>
+<td width="50%">
+
+### ⚙️ Fully Customizable
+Make WorkBalance work for you with extensive customization options:
+
+- Adjust all timer durations
+- Configure overlay visibility
+- Set daily wellness goals
+- Auto-start preferences
+- Minimize to system tray on startup
+
+</td>
+</tr>
+</table>
+
+### 📝 Task Management
+
+Keep track of what you're working on with integrated task management:
+
+- Create and organize tasks
+- Estimate pomodoros per task
+- Track completed pomodoros
+- Visual progress indicators
+
+### 🔔 System Tray Integration
+
+WorkBalance lives quietly in your system tray, ready when you need it:
+
+- Start minimized to tray option
+- Quick access from tray icon
+- Unobtrusive notifications
+- One-click window restore
+
+### ❓ Built-in Help
+
+New to Pomodoro? No problem! Press `F1` or click the help icon for instant guidance.
+
+![Help Dialog](assets/screenshots/workbalance_help.png)
 
 ---
 
-## 🖼️ Screenshots
+## 🚀 Quick Start
 
-### Main Interface
-![Main Interface](assets/screenshots/ui_screenshot.png)
+### Download & Run
 
-### Overlay Mode
-A compact, transparent timer that stays on top of other windows for distraction-free focus.
+1. **Download** the latest release from the [Releases page](../../releases)
+2. **Extract** the archive
+3. **Run** `WorkBalance.exe` - No installation required!
+
+### First Steps
+
+1. 🍅 Click **Start** to begin your first Pomodoro
+2. 📝 Add tasks to track what you're working on
+3. 💪 Take breaks when the timer rings
+4. 📊 Watch your productivity soar!
+
+---
+
+## 🖼️ Screenshots Gallery
+
+<div align="center">
+
+| Main Interface | Overlay Mode |
+|:--------------:|:------------:|
+| ![Main](assets/screenshots/workbalance_pomodoro.png) | ![Overlay](assets/screenshots/workbalance_overlay.png) |
+
+| Hydration Tracking | Settings |
+|:------------------:|:--------:|
+| ![Hydration](assets/screenshots/workbalance_hydration.png) | ![Settings](assets/screenshots/workbalance_settings.png) |
+
+</div>
 
 ---
 
@@ -159,20 +289,23 @@ All core features work identically on every platform. For detailed platform-spec
 | Key | Action |
 |-----|--------|
 | `Space` | Start/Pause timer |
-| `Up Arrow` | Skip to next timer |
-| `Escape` | Close help dialog |
+| `↑` Up Arrow | Skip to next timer |
+| `F1` | Open help dialog |
+| `Escape` | Close dialogs |
 
 ---
 
-## 🎨 Customization
+## 🎨 Timer Modes
 
-WorkBalance includes three timer modes:
+WorkBalance includes three carefully designed timer modes based on proven productivity research:
 
-- **Pomodoro** - 25 minutes of focused work
-- **Short Break** - 5 minute break
-- **Long Break** - 15 minute break
+| Mode | Duration | Purpose |
+|------|----------|---------|
+| 🍅 **Pomodoro** | 25 min | Deep, focused work session |
+| ☕ **Short Break** | 5 min | Quick mental reset |
+| 🌴 **Long Break** | 15 min | Extended rest after 4 pomodoros |
 
-You can customize timer durations and switch between modes using the header buttons.
+All durations are fully customizable in Settings!
 
 ---
 
@@ -189,14 +322,17 @@ Key components:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's:
+We welcome contributions from the community! Whether you're a seasoned developer or just getting started, there's a place for you:
 
-- 🐛 Bug reports
-- 💡 Feature requests
-- 📖 Documentation improvements
-- 🔧 Code contributions
+| Type | Description |
+|------|-------------|
+| 🐛 **Bug Reports** | Found something broken? Let us know! |
+| 💡 **Feature Ideas** | Have a suggestion? We'd love to hear it |
+| 📖 **Documentation** | Help improve our docs and guides |
+| 🔧 **Code** | Submit PRs for bug fixes or new features |
+| 🌐 **Translations** | Help make WorkBalance accessible worldwide |
 
-Please feel free to open an issue or submit a pull request.
+Check out our [Contributing Guide](CONTRIBUTING.md) to get started!
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support%20development-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/tlgylmz)
 
@@ -221,36 +357,52 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 
 ## 🙏 Acknowledgments
 
-- **[Pomofocus.io](https://pomofocus.io)** - Inspiration for this desktop implementation
-- **Omar Cornut** - Creator of Dear ImGui
-- **GLFW Contributors** - Cross-platform windowing made easy
-- **David Reid** - miniaudio library
-- **Sean Barrett** - stb single-file libraries
+- **[Pomofocus.io](https://pomofocus.io)** - The inspiration behind this desktop implementation
+- **[Omar Cornut](https://github.com/ocornut)** - Creator of the amazing Dear ImGui
+- **GLFW Contributors** - Making cross-platform windowing a breeze
+- **[David Reid](https://github.com/mackron)** - miniaudio library for seamless audio
+- **[Sean Barrett](https://github.com/nothings)** - stb single-file libraries
 
 ---
 
 ## 👨‍💻 Author
 
-**Tolga Yilmaz**
+**Tolga Yilmaz** - [GitHub](https://github.com/tolgayilmaz86)
 
 ---
 
 ## 🔮 Roadmap
 
-- [X] Settings persistence
-- [ ] Statistics and analytics
-- [X] System tray integration
-- [ ] Multiple themes
-- [ ] Custom sound alerts
-- [ ] Task categories and tags
-- [ ] Export/import task history
+- [x] ✅ Settings persistence
+- [x] ✅ System tray integration
+- [x] ✅ Wellness timers (hydration, stand-up, eye care)
+- [x] ✅ Always-on-top overlay
+- [x] ✅ Start minimized option
+- [ ] 📊 Statistics and analytics dashboard
+- [ ] 🎨 Multiple themes (dark, light, custom)
+- [ ] 🔊 Custom sound alerts
+- [ ] 🏷️ Task categories and tags
+- [ ] 📤 Export/import task history
+- [ ] 🔄 Sync across devices
 
 ---
 
 <div align="center">
 
-**Built with ❤️ using C++20 and CMake**
+## 💖 Support Development
 
-[Report Bug](https://github.com/yourusername/WorkBalance/issues) · [Request Feature](https://github.com/yourusername/WorkBalance/issues)
+If WorkBalance helps you stay productive, consider supporting its development!
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support%20development-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/tlgylmz)
+
+Your support helps fund new features, bug fixes, and keeps the project alive!
+
+---
+
+**Built with ❤️ using Modern C++23 and Dear ImGui**
+
+*WorkBalance - Because your time matters.*
+
+[⬆ Back to Top](#workbalance)
 
 </div>
