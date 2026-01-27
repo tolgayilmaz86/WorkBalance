@@ -106,6 +106,9 @@ struct AppState {
     bool water_auto_loop = false;
     bool standup_auto_loop = false;
     bool eye_care_auto_loop = false;
+
+    // ===== Startup Settings =====
+    bool start_minimized = true;
 };
 
 // Utility class for time formatting

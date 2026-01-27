@@ -69,7 +69,7 @@ class ScopedGLFWContext {
 
 class Application::Impl {
   public:
-    Impl();
+    explicit Impl(bool launched_at_startup);
     ~Impl();
     void run();
 
@@ -106,6 +106,7 @@ class Application::Impl {
     void initializeSystemTray();
     void updateSystemTrayState();
     void showWindow();
+    void hideWindow();
     void setupWellnessCallbacks();
 
     // Wellness timer controls
@@ -151,9 +152,11 @@ class Application::Impl {
     std::unique_ptr<Core::WellnessTimer> m_water_timer;
     std::unique_ptr<Core::WellnessTimer> m_standup_timer;
     std::unique_ptr<Core::WellnessTimer> m_eye_care_timer;
+
+    bool m_launched_at_startup{false};
 };
 
-Application::Impl::Impl()
+Application::Impl::Impl(bool launched_at_startup)
     : m_window(getWindowWidth(), getWindowHeight(), Core::Configuration::WINDOW_TITLE), m_imgui_layer(m_window.get()),
       m_overlay_window(), m_audio(System::createAudioService()),
       m_timer(Core::Configuration::DEFAULT_POMODORO_DURATION, Core::Configuration::DEFAULT_SHORT_BREAK_DURATION,
@@ -165,6 +168,7 @@ Application::Impl::Impl()
               .onToggleTimer = [this]() { toggleTimer(); },
               .onModeChange = [this](Core::TimerMode mode) { setTimerMode(mode); },
               .onToggleOverlayMode = [this]() { toggleOverlayMode(); },
+              .onMinimizeToTray = [this]() { hideWindow(); },
               .onRequestClose = [this]() { requestClose(); },
               .onDurationsApplied = [this](int pomodoro, int short_break,
                                            int long_break) { applyDurations(pomodoro, short_break, long_break); },
@@ -188,7 +192,8 @@ Application::Impl::Impl()
                                                             Core::WellnessDefaults::DEFAULT_STANDUP_DURATION)),
       m_eye_care_timer(std::make_unique<Core::WellnessTimer>(Core::WellnessType::EyeStrain,
                                                              Core::WellnessDefaults::DEFAULT_EYE_INTERVAL,
-                                                             Core::WellnessDefaults::DEFAULT_EYE_BREAK_DURATION)) {
+                                                             Core::WellnessDefaults::DEFAULT_EYE_BREAK_DURATION)),
+      m_launched_at_startup(launched_at_startup) {
 
     // Set up wellness timers in the views
     m_main_view.setWellnessTimers(m_water_timer.get(), m_standup_timer.get(), m_eye_care_timer.get());
@@ -197,6 +202,13 @@ Application::Impl::Impl()
 
     loadPersistedData();
     applyPersistedWindowPositions();
+
+    // Start minimized only when launched via Windows startup (--startup flag)
+    // AND the user has the "start minimized" setting enabled
+    if (m_launched_at_startup && m_state.start_minimized) {
+        glfwHideWindow(m_window.get());
+    }
+
     m_state.background_color = WorkBalance::ThemeManager::getBackgroundColor(m_timer.getCurrentMode());
     updatePomodoroCounters();
     updateWellnessCounters();
@@ -515,6 +527,9 @@ void Application::Impl::loadPersistedData() {
     m_state.standup_auto_loop = data.settings.standup_auto_loop;
     m_state.eye_care_auto_loop = data.settings.eye_care_auto_loop;
 
+    // Restore startup settings
+    m_state.start_minimized = data.settings.start_minimized;
+
     // Restore tasks
     for (const auto& task : data.tasks) {
         m_task_manager.addTask(task.name, task.estimated_pomodoros);
@@ -578,6 +593,9 @@ void Application::Impl::savePersistedData() const {
     data.settings.standup_auto_loop = m_state.standup_auto_loop;
     data.settings.eye_care_auto_loop = m_state.eye_care_auto_loop;
 
+    // Save startup settings
+    data.settings.start_minimized = m_state.start_minimized;
+
     // Save tasks
     const auto tasks = m_task_manager.getTasks();
     data.tasks.reserve(tasks.size());
@@ -612,6 +630,10 @@ void Application::Impl::updateSystemTrayState() {
 void Application::Impl::showWindow() {
     glfwShowWindow(m_window.get());
     glfwFocusWindow(m_window.get());
+}
+
+void Application::Impl::hideWindow() {
+    glfwHideWindow(m_window.get());
 }
 
 // ============================================================================
@@ -777,7 +799,7 @@ void Application::Impl::endEyeCareBreak() {
     }
 }
 
-Application::Application() : m_impl(std::make_unique<Application::Impl>()) {
+Application::Application(bool launched_at_startup) : m_impl(std::make_unique<Application::Impl>(launched_at_startup)) {
 }
 
 Application::~Application() = default;

@@ -55,6 +55,12 @@ void SettingsPopup::render() {
         renderWellnessSection();
 
         ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        renderStartupSection();
+
+        ImGui::Spacing();
         ImGui::Spacing();
 
         // Save button
@@ -201,6 +207,18 @@ void SettingsPopup::renderDurationRow(const char* label, const char* minusId, co
     }
 
     ImGui::Spacing();
+}
+
+void SettingsPopup::renderStartupSection() {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+    ImGui::Text("Windows Startup");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+
+    ImGui::Checkbox("Start minimized when launched at Windows startup", &m_state.start_minimized);
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+    ImGui::TextWrapped("Manual launch always shows the window");
+    ImGui::PopStyleColor();
 }
 
 } // namespace WorkBalance::App::UI::Components

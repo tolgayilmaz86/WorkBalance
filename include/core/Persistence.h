@@ -60,6 +60,8 @@ struct UserSettings {
     bool water_auto_loop = false;
     bool standup_auto_loop = false;
     bool eye_care_auto_loop = false;
+    // Startup settings
+    bool start_minimized = true;
 };
 
 /// @brief Persistent application data including tasks and settings

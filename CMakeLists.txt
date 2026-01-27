@@ -26,7 +26,7 @@ find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
 # Include resource embedding script
-include(embed_resources.cmake)
+include(cmake/embed_resources.cmake)
 
 # Embed sound files
 set(EMBEDDED_RESOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/embedded")
@@ -122,7 +122,7 @@ if(WIN32)
     src/system/OverlayWindow.cpp
     src/system/SystemTray.cpp
     src/system/WindowBase.cpp
-        app.rc
+        assets/app.rc
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/hydration_wav.cpp
@@ -206,9 +206,13 @@ if(MSVC)
         /Zc:preprocessor        # Enable conforming preprocessor
         /utf-8                  # Use UTF-8 encoding
     )
-    set_property(TARGET WorkBalance PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
-    )
+    # Use CMAKE_MSVC_RUNTIME_LIBRARY if set (allows static linking via preset)
+    # Otherwise default to DLL runtime for development
+    if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+        set_property(TARGET WorkBalance PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        )
+    endif()
     # Debug-specific options
     target_compile_options(WorkBalance PRIVATE
         $<$<CONFIG:Debug>:/ZI>          # Edit and continue debugging

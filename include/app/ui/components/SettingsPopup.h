@@ -34,6 +34,9 @@ class SettingsPopup {
     /// @brief Renders the wellness reminders settings section
     void renderWellnessSection();
 
+    /// @brief Renders the startup settings section
+    void renderStartupSection();
+
     /// @brief Renders a duration input row with +/- buttons
     /// @param label The label for the row
     /// @param minusId ImGui ID for minus button

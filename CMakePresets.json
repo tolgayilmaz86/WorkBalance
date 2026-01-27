@@ -45,6 +45,28 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "x64-release-static",
+      "displayName": "x64 Release (Static)",
+      "description": "Fully static release build - single executable with no DLL dependencies",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     }
   ],
   "buildPresets": [
@@ -56,6 +78,11 @@
     {
       "name": "x64-release",
       "configurePreset": "x64-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "x64-release-static",
+      "configurePreset": "x64-release-static",
       "configuration": "Release"
     }
   ]

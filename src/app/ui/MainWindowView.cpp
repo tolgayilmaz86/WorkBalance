@@ -450,6 +450,14 @@ void MainWindowView::renderHeader() {
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(start_x + ((button_size + spacing) * 3.0f));
+    if (ImGui::Button(ICON_FA_WINDOW_MINIMIZE, ImVec2(button_size, button_size))) {
+        if (m_callbacks.onMinimizeToTray) {
+            m_callbacks.onMinimizeToTray();
+        }
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(start_x + ((button_size + spacing) * 4.0f));
     if (ImGui::Button(ICON_FA_POWER_OFF, ImVec2(button_size, button_size))) {
         if (m_callbacks.onRequestClose) {
             m_callbacks.onRequestClose();

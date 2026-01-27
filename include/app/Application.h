@@ -5,7 +5,8 @@
 namespace WorkBalance::App {
 class Application {
   public:
-    Application();
+    /// @param launched_at_startup Set to true when app is auto-started by Windows (via --startup flag)
+    explicit Application(bool launched_at_startup = false);
     ~Application();
 
     Application(Application&&) noexcept = default;

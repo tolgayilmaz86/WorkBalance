@@ -342,7 +342,8 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "eye_care_break_seconds": {},
     "water_auto_loop": {},
     "standup_auto_loop": {},
-    "eye_care_auto_loop": {}
+    "eye_care_auto_loop": {},
+    "start_minimized": {}
   }},
   "current_task_index": {},
   "tasks": [
@@ -360,7 +361,8 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
         data.settings.water_daily_goal, data.settings.standup_interval_minutes, data.settings.standup_duration_minutes,
         data.settings.eye_care_interval_minutes, data.settings.eye_care_break_seconds,
         data.settings.water_auto_loop ? "true" : "false", data.settings.standup_auto_loop ? "true" : "false",
-        data.settings.eye_care_auto_loop ? "true" : "false", data.current_task_index, tasks_json);
+        data.settings.eye_care_auto_loop ? "true" : "false", data.settings.start_minimized ? "true" : "false",
+        data.current_task_index, tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {
@@ -400,6 +402,8 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
         data.settings.water_auto_loop = extractJsonBool(settings_json, "water_auto_loop", false);
         data.settings.standup_auto_loop = extractJsonBool(settings_json, "standup_auto_loop", false);
         data.settings.eye_care_auto_loop = extractJsonBool(settings_json, "eye_care_auto_loop", false);
+        // Startup settings
+        data.settings.start_minimized = extractJsonBool(settings_json, "start_minimized", true);
     }
 
     // Extract current task index

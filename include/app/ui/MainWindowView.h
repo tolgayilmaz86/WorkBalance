@@ -32,6 +32,7 @@ struct MainWindowCallbacks {
     std::function<void()> onToggleTimer;
     std::function<void(Core::TimerMode)> onModeChange;
     std::function<void()> onToggleOverlayMode;
+    std::function<void()> onMinimizeToTray;
     std::function<void()> onRequestClose;
     std::function<void(int pomodoroMinutes, int shortBreakMinutes, int longBreakMinutes)> onDurationsApplied;
     std::function<void(int waterIntervalMins, int waterGoal, int standupIntervalMins, int standupDurationMins,
@@ -50,6 +51,7 @@ struct MainWindowCallbacks {
         return MainWindowCallbacks{.onToggleTimer = std::move(timer.onToggle),
                                    .onModeChange = std::move(timer.onModeChange),
                                    .onToggleOverlayMode = std::move(window.onToggleOverlayMode),
+                                   .onMinimizeToTray = std::move(window.onMinimizeToTray),
                                    .onRequestClose = std::move(window.onRequestClose),
                                    .onDurationsApplied = std::move(settings.onPomodoroDurationsApplied),
                                    .onWellnessSettingsApplied = std::move(settings.onWellnessSettingsApplied),

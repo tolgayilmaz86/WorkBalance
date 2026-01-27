@@ -150,7 +150,7 @@ WorkBalance is designed to work seamlessly across all major desktop platforms:
 | **Linux** | ✅ Fully Supported | Tested on Ubuntu, Fedora, Arch |
 | **macOS** | ✅ Fully Supported | macOS 10.15+ recommended |
 
-All core features work identically on every platform. For detailed platform-specific build instructions, see [BUILD.md](BUILD.md).
+All core features work identically on every platform. For detailed platform-specific build instructions, see [BUILD.md](docs/BUILD.md).
 
 ---
 

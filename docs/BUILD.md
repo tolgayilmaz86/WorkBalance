@@ -38,7 +38,7 @@ All dependencies are available via vcpkg on all platforms:
    - Wrapped in `#ifdef _WIN32`
    - **On Linux/macOS:** Simply not applied, window still works
 
-2. **Icon Resource File** (`app.rc`)
+2. **Icon Resource File** (`assets/app.rc`)
    - Only compiled on Windows
    - **On Linux/macOS:** Icon still set via GLFW (PNG embedded)
 
