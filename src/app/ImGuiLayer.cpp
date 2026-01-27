@@ -20,6 +20,9 @@ ImGuiLayer::ImGuiLayer(GLFWwindow* window) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
+    // Disable automatic imgui.ini file creation - we handle persistence ourselves
+    io.IniFilename = nullptr;
+
     loadFonts(io);
     applyStyle();
 
