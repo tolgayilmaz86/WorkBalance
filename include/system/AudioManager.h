@@ -4,6 +4,7 @@
 #include "assets/sounds/miniaudio.h"
 
 #include <cstddef>
+#include <filesystem>
 #include <memory>
 
 namespace WorkBalance::System {
@@ -29,9 +30,11 @@ class AudioManager final : public IAudioService {
   private:
     void playEmbeddedSound(const unsigned char* data, size_t size);
     void stopNotificationSounds();
+    void cleanupTempFile();
 
     ma_engine m_engine{};
     ma_sound m_notification_sound{};
+    std::filesystem::path m_current_temp_path;
     bool m_notification_sound_initialized = false;
     bool m_initialized = false;
     int m_volume = 100; // 0-100 percentage

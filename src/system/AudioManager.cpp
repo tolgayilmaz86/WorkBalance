@@ -53,6 +53,15 @@ void AudioManager::stopNotificationSounds() {
         ma_sound_uninit(&m_notification_sound);
         m_notification_sound_initialized = false;
     }
+    cleanupTempFile();
+}
+
+void AudioManager::cleanupTempFile() {
+    if (!m_current_temp_path.empty()) {
+        std::error_code ec;
+        std::filesystem::remove(m_current_temp_path, ec);
+        m_current_temp_path.clear();
+    }
 }
 
 void AudioManager::playClickSound() {
@@ -104,27 +113,27 @@ int AudioManager::getVolume() const noexcept {
 }
 
 void AudioManager::playEmbeddedSound(const unsigned char* data, size_t size) {
-    // Stop any currently playing notification sound
+    // Stop any currently playing notification sound and clean up
     stopNotificationSounds();
 
-    std::filesystem::path temp_path;
     try {
-        temp_path = createTemporaryWavPath();
+        m_current_temp_path = createTemporaryWavPath();
     } catch (const std::exception& ex) {
         std::cerr << "Failed to create temporary audio path: " << ex.what() << '\n';
         return;
     }
 
-    std::ofstream temp_file(temp_path, std::ios::binary);
+    std::ofstream temp_file(m_current_temp_path, std::ios::binary);
     if (!temp_file) {
-        std::cerr << "Failed to open temporary audio file: " << temp_path << '\n';
+        std::cerr << "Failed to open temporary audio file: " << m_current_temp_path << '\n';
+        m_current_temp_path.clear();
         return;
     }
 
     temp_file.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(size));
     temp_file.close();
 
-    const std::string path_string = temp_path.string();
+    const std::string path_string = m_current_temp_path.string();
 
     // Initialize sound with explicit no-looping flag
     constexpr ma_uint32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION;
@@ -132,6 +141,7 @@ void AudioManager::playEmbeddedSound(const unsigned char* data, size_t size) {
         ma_sound_init_from_file(&m_engine, path_string.c_str(), flags, nullptr, nullptr, &m_notification_sound);
     if (result != MA_SUCCESS) {
         std::cerr << "Failed to initialize sound. Error code: " << result << '\n';
+        cleanupTempFile();
         return;
     }
 
