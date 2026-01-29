@@ -7,7 +7,7 @@ namespace WorkBalance::App::UI::Components {
 
 /// @brief Self-contained component for rendering the settings popup dialog
 /// @details Handles all settings editing including Pomodoro durations, wellness intervals,
-///          and overlay visibility options
+///          and overlay visibility options. Settings are organized into tabs for better UX.
 class SettingsPopup {
   public:
     /// @brief Callbacks for settings changes
@@ -28,14 +28,17 @@ class SettingsPopup {
     void render();
 
   private:
-    /// @brief Renders the Pomodoro timer duration settings section
-    void renderPomodoroSection();
+    /// @brief Renders the tab bar for settings categories
+    void renderTabBar();
 
-    /// @brief Renders the wellness reminders settings section
-    void renderWellnessSection();
+    /// @brief Renders the Pomodoro timer duration settings tab content
+    void renderPomodoroTab();
 
-    /// @brief Renders the startup settings section
-    void renderStartupSection();
+    /// @brief Renders the wellness reminders settings tab content
+    void renderWellnessTab();
+
+    /// @brief Renders the general/startup settings tab content
+    void renderGeneralTab();
 
     /// @brief Renders a duration input row with +/- buttons
     /// @param label The label for the row
@@ -47,6 +50,9 @@ class SettingsPopup {
     /// @param maxValue Maximum allowed value
     void renderDurationRow(const char* label, const char* minusId, const char* inputId, const char* plusId, int& value,
                            int minValue, int maxValue);
+
+    /// @brief Renders the save/cancel buttons at the bottom
+    void renderButtons();
 
     AppState& m_state;
     Callbacks m_callbacks;
