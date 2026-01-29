@@ -254,6 +254,44 @@ TEST_F(PersistenceTest, PomodoroCycleSettingsDefaultsAreCorrect) {
     EXPECT_FALSE(loaded.settings.auto_start_pomodoros);
 }
 
+TEST_F(PersistenceTest, SaveAndLoadNotificationSettings) {
+    PersistentData data;
+    data.settings.pomodoro_notification_enabled = false;
+    data.settings.water_notification_enabled = false;
+    data.settings.standup_notification_enabled = false;
+    data.settings.eye_care_notification_enabled = false;
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    EXPECT_FALSE(loaded.settings.pomodoro_notification_enabled);
+    EXPECT_FALSE(loaded.settings.water_notification_enabled);
+    EXPECT_FALSE(loaded.settings.standup_notification_enabled);
+    EXPECT_FALSE(loaded.settings.eye_care_notification_enabled);
+}
+
+TEST_F(PersistenceTest, NotificationSettingsDefaultsAreCorrect) {
+    // Verify default values are correct when not specified
+    PersistentData data;
+    // Don't set any notification settings - use defaults
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    EXPECT_TRUE(loaded.settings.pomodoro_notification_enabled);
+    EXPECT_TRUE(loaded.settings.water_notification_enabled);
+    EXPECT_TRUE(loaded.settings.standup_notification_enabled);
+    EXPECT_TRUE(loaded.settings.eye_care_notification_enabled);
+}
+
 TEST_F(PersistenceTest, SaveAndLoadTasks) {
     PersistentData data;
 
@@ -414,6 +452,11 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     data.settings.standup_sound_volume = 25;
     data.settings.eye_care_sound_enabled = false;
     data.settings.eye_care_sound_volume = 10;
+    // Notification settings
+    data.settings.pomodoro_notification_enabled = false;
+    data.settings.water_notification_enabled = false;
+    data.settings.standup_notification_enabled = false;
+    data.settings.eye_care_notification_enabled = false;
 
     data.current_task_index = 5;
 
@@ -461,6 +504,11 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     EXPECT_EQ(loaded.settings.standup_sound_volume, 25);
     EXPECT_FALSE(loaded.settings.eye_care_sound_enabled);
     EXPECT_EQ(loaded.settings.eye_care_sound_volume, 10);
+    // Notification settings
+    EXPECT_FALSE(loaded.settings.pomodoro_notification_enabled);
+    EXPECT_FALSE(loaded.settings.water_notification_enabled);
+    EXPECT_FALSE(loaded.settings.standup_notification_enabled);
+    EXPECT_FALSE(loaded.settings.eye_care_notification_enabled);
     EXPECT_EQ(loaded.current_task_index, 5);
 }
 

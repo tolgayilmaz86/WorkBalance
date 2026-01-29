@@ -23,6 +23,7 @@
 #include <core/WellnessTypes.h>
 #include <system/AudioManager.h>
 #include <system/MainWindow.h>
+#include <system/NotificationManager.h>
 #include <system/OverlayWindow.h>
 #include <system/SystemTray.h>
 #include <system/WindowBase.h>
@@ -141,6 +142,7 @@ class Application::Impl {
     App::ImGuiLayer m_imgui_layer;
     System::OverlayWindow m_overlay_window;
     std::unique_ptr<System::IAudioService> m_audio;
+    std::unique_ptr<System::INotificationService> m_notifications;
     Core::Timer m_timer;
     Core::TaskManager m_task_manager;
     Core::PersistenceManager m_persistence;
@@ -159,7 +161,7 @@ class Application::Impl {
 
 Application::Impl::Impl(bool launched_at_startup)
     : m_window(getWindowWidth(), getWindowHeight(), Core::Configuration::WINDOW_TITLE), m_imgui_layer(m_window.get()),
-      m_overlay_window(), m_audio(System::createAudioService()),
+      m_overlay_window(), m_audio(System::createAudioService()), m_notifications(System::createNotificationService()),
       m_timer(Core::Configuration::DEFAULT_POMODORO_DURATION, Core::Configuration::DEFAULT_SHORT_BREAK_DURATION,
               Core::Configuration::DEFAULT_LONG_BREAK_DURATION),
       m_persistence(),
@@ -328,6 +330,17 @@ void Application::Impl::handleTimerComplete() {
     }
 
     const Core::TimerMode current_mode = m_timer.getCurrentMode();
+
+    // Show notification based on completed mode
+    if (m_state.pomodoro_notification_enabled && m_notifications && m_notifications->isSupported()) {
+        if (current_mode == Core::TimerMode::Pomodoro) {
+            m_notifications->showPomodoroComplete();
+        } else if (current_mode == Core::TimerMode::ShortBreak) {
+            m_notifications->showShortBreakComplete();
+        } else if (current_mode == Core::TimerMode::LongBreak) {
+            m_notifications->showLongBreakComplete();
+        }
+    }
 
     if (current_mode == Core::TimerMode::Pomodoro) {
         // Increment task pomodoros
@@ -593,6 +606,12 @@ void Application::Impl::loadPersistedData() {
     m_state.eye_care_sound_enabled = data.settings.eye_care_sound_enabled;
     m_state.eye_care_sound_volume = data.settings.eye_care_sound_volume;
 
+    // Restore notification settings
+    m_state.pomodoro_notification_enabled = data.settings.pomodoro_notification_enabled;
+    m_state.water_notification_enabled = data.settings.water_notification_enabled;
+    m_state.standup_notification_enabled = data.settings.standup_notification_enabled;
+    m_state.eye_care_notification_enabled = data.settings.eye_care_notification_enabled;
+
     // Sync Windows startup registry with saved setting
     System::WindowsStartup::setStartupEnabled(m_state.start_with_windows);
 
@@ -685,6 +704,12 @@ void Application::Impl::savePersistedData() const {
     data.settings.eye_care_sound_enabled = m_state.eye_care_sound_enabled;
     data.settings.eye_care_sound_volume = m_state.eye_care_sound_volume;
 
+    // Save notification settings
+    data.settings.pomodoro_notification_enabled = m_state.pomodoro_notification_enabled;
+    data.settings.water_notification_enabled = m_state.water_notification_enabled;
+    data.settings.standup_notification_enabled = m_state.standup_notification_enabled;
+    data.settings.eye_care_notification_enabled = m_state.eye_care_notification_enabled;
+
     // Save tasks
     const auto tasks = m_task_manager.getTasks();
     data.tasks.reserve(tasks.size());
@@ -769,6 +794,9 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
                     audio.playHydrationSound();
                 });
             }
+            if (m_state.water_notification_enabled && m_notifications && m_notifications->isSupported()) {
+                m_notifications->showWaterReminder();
+            }
             // Auto-restart if loop is enabled
             if (m_state.water_auto_loop && m_water_timer) {
                 m_water_timer->acknowledgeReminder();
@@ -783,6 +811,9 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
                     audio.playWalkSound();
                 });
             }
+            if (m_state.standup_notification_enabled && m_notifications && m_notifications->isSupported()) {
+                m_notifications->showStandupReminder();
+            }
             // If break completed, restart interval timer
             if (m_standup_timer && !m_standup_timer->isInBreak()) {
                 m_standup_timer->start();
@@ -794,6 +825,9 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
                     audio.setVolume(m_state.eye_care_sound_volume);
                     audio.playBellSound();
                 });
+            }
+            if (m_state.eye_care_notification_enabled && m_notifications && m_notifications->isSupported()) {
+                m_notifications->showEyeCareReminder();
             }
             // If break completed, restart interval timer
             if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {

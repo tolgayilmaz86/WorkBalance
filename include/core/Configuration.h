@@ -78,6 +78,9 @@ struct Configuration {
     // Sound defaults
     static constexpr bool DEFAULT_SOUND_ENABLED = true;
     static constexpr int DEFAULT_SOUND_VOLUME = 100; // 0-100 percentage
+
+    // Notification defaults
+    static constexpr bool DEFAULT_NOTIFICATIONS_ENABLED = true;
 };
 
 } // namespace WorkBalance::Core

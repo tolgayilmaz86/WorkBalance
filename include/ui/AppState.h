@@ -130,6 +130,12 @@ struct AppState {
     int standup_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
     bool eye_care_sound_enabled = Core::Configuration::DEFAULT_SOUND_ENABLED;
     int eye_care_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
+
+    // ===== Notification Settings =====
+    bool pomodoro_notification_enabled = Core::Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool water_notification_enabled = Core::Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool standup_notification_enabled = Core::Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool eye_care_notification_enabled = Core::Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
 };
 
 // Utility class for time formatting

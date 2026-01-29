@@ -75,6 +75,11 @@ struct UserSettings {
     int standup_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
     bool eye_care_sound_enabled = Configuration::DEFAULT_SOUND_ENABLED;
     int eye_care_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
+    // Notification settings
+    bool pomodoro_notification_enabled = Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool water_notification_enabled = Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool standup_notification_enabled = Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
+    bool eye_care_notification_enabled = Configuration::DEFAULT_NOTIFICATIONS_ENABLED;
 };
 
 /// @brief Persistent application data including tasks and settings

@@ -12,6 +12,7 @@
     },
     "glfw3",
     "opengl",
-    "gtest"
+    "gtest",
+    "wintoast"
   ]
 }

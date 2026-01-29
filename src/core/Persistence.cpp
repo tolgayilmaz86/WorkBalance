@@ -368,7 +368,11 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "standup_sound_enabled": {},
     "standup_sound_volume": {},
     "eye_care_sound_enabled": {},
-    "eye_care_sound_volume": {}
+    "eye_care_sound_volume": {},
+    "pomodoro_notification_enabled": {},
+    "water_notification_enabled": {},
+    "standup_notification_enabled": {},
+    "eye_care_notification_enabled": {}
   }},
   "current_task_index": {},
   "tasks": [
@@ -392,7 +396,10 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
         data.settings.pomodoro_sound_volume, data.settings.water_sound_enabled ? "true" : "false",
         data.settings.water_sound_volume, data.settings.standup_sound_enabled ? "true" : "false",
         data.settings.standup_sound_volume, data.settings.eye_care_sound_enabled ? "true" : "false",
-        data.settings.eye_care_sound_volume, data.current_task_index, tasks_json);
+        data.settings.eye_care_sound_volume, data.settings.pomodoro_notification_enabled ? "true" : "false",
+        data.settings.water_notification_enabled ? "true" : "false",
+        data.settings.standup_notification_enabled ? "true" : "false",
+        data.settings.eye_care_notification_enabled ? "true" : "false", data.current_task_index, tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {
@@ -456,6 +463,15 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
             extractJsonBool(settings_json, "eye_care_sound_enabled", Configuration::DEFAULT_SOUND_ENABLED);
         data.settings.eye_care_sound_volume =
             extractJsonInt(settings_json, "eye_care_sound_volume", Configuration::DEFAULT_SOUND_VOLUME);
+        // Notification settings
+        data.settings.pomodoro_notification_enabled = extractJsonBool(settings_json, "pomodoro_notification_enabled",
+                                                                      Configuration::DEFAULT_NOTIFICATIONS_ENABLED);
+        data.settings.water_notification_enabled =
+            extractJsonBool(settings_json, "water_notification_enabled", Configuration::DEFAULT_NOTIFICATIONS_ENABLED);
+        data.settings.standup_notification_enabled = extractJsonBool(settings_json, "standup_notification_enabled",
+                                                                     Configuration::DEFAULT_NOTIFICATIONS_ENABLED);
+        data.settings.eye_care_notification_enabled = extractJsonBool(settings_json, "eye_care_notification_enabled",
+                                                                      Configuration::DEFAULT_NOTIFICATIONS_ENABLED);
     }
 
     // Extract current task index

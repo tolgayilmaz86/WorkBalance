@@ -277,6 +277,7 @@ void SettingsPopup::renderSoundTab() {
         ImGui::SetNextItemWidth(150.0f);
         ImGui::SliderInt("Volume##pomodoro", &m_state.pomodoro_sound_volume, 0, 100, "%d%%");
     }
+    ImGui::Checkbox("Enable notification##pomodoro", &m_state.pomodoro_notification_enabled);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -293,6 +294,7 @@ void SettingsPopup::renderSoundTab() {
         ImGui::SetNextItemWidth(150.0f);
         ImGui::SliderInt("Volume##water", &m_state.water_sound_volume, 0, 100, "%d%%");
     }
+    ImGui::Checkbox("Enable notification##water", &m_state.water_notification_enabled);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -309,6 +311,7 @@ void SettingsPopup::renderSoundTab() {
         ImGui::SetNextItemWidth(150.0f);
         ImGui::SliderInt("Volume##standup", &m_state.standup_sound_volume, 0, 100, "%d%%");
     }
+    ImGui::Checkbox("Enable notification##standup", &m_state.standup_notification_enabled);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -325,6 +328,7 @@ void SettingsPopup::renderSoundTab() {
         ImGui::SetNextItemWidth(150.0f);
         ImGui::SliderInt("Volume##eyecare", &m_state.eye_care_sound_volume, 0, 100, "%d%%");
     }
+    ImGui::Checkbox("Enable notification##eyecare", &m_state.eye_care_notification_enabled);
 
     ImGui::PopStyleColor(5);
     ImGui::PopStyleVar(2);

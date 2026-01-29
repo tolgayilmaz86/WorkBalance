@@ -24,6 +24,7 @@ endif()
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(unofficial-wintoast CONFIG REQUIRED)
 
 # Include resource embedding script
 include(cmake/embed_resources.cmake)
@@ -117,6 +118,7 @@ if(WIN32)
     src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp
+    src/system/NotificationManager.cpp
     src/system/StbImage.cpp
     src/system/MiniaudioImplementation.cpp
     src/system/OverlayWindow.cpp
@@ -161,6 +163,7 @@ else()
     src/ui/NavigationTabs.cpp
     src/system/AudioManager.cpp
     src/system/MainWindow.cpp
+    src/system/NotificationManager.cpp
     src/system/StbImage.cpp
     src/system/MiniaudioImplementation.cpp
     src/system/OverlayWindow.cpp
@@ -190,6 +193,7 @@ target_link_libraries(WorkBalance PRIVATE
     glfw
     OpenGL::GL
     imgui::imgui
+    unofficial::wintoast::wintoast
 )
 
 # Set target properties
