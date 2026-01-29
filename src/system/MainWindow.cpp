@@ -179,6 +179,11 @@ MainWindow::MainWindow(int width, int height, std::string_view title) {
     glfwSwapInterval(0);
 }
 
+void MainWindow::setSavedOverlayPosition(int x, int y) {
+    m_saved_overlay_x = x;
+    m_saved_overlay_y = y;
+}
+
 void MainWindow::setOverlayMode(bool overlay_mode) {
     if (m_window == nullptr) {
         return;

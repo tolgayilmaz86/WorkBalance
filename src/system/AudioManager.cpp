@@ -2,6 +2,7 @@
 
 #include "assets/embedded_resources.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -40,8 +41,17 @@ AudioManager::AudioManager() {
 }
 
 AudioManager::~AudioManager() {
+    stopNotificationSounds();
     if (m_initialized) {
         ma_engine_uninit(&m_engine);
+    }
+}
+
+void AudioManager::stopNotificationSounds() {
+    if (m_notification_sound_initialized) {
+        ma_sound_stop(&m_notification_sound);
+        ma_sound_uninit(&m_notification_sound);
+        m_notification_sound_initialized = false;
     }
 }
 
@@ -81,7 +91,22 @@ bool AudioManager::isInitialized() const noexcept {
     return m_initialized;
 }
 
+void AudioManager::setVolume(int volume) {
+    m_volume = std::clamp(volume, 0, 100);
+    if (m_initialized) {
+        // Convert 0-100 to 0.0-1.0 for miniaudio
+        ma_engine_set_volume(&m_engine, static_cast<float>(m_volume) / 100.0f);
+    }
+}
+
+int AudioManager::getVolume() const noexcept {
+    return m_volume;
+}
+
 void AudioManager::playEmbeddedSound(const unsigned char* data, size_t size) {
+    // Stop any currently playing notification sound
+    stopNotificationSounds();
+
     std::filesystem::path temp_path;
     try {
         temp_path = createTemporaryWavPath();
@@ -100,9 +125,25 @@ void AudioManager::playEmbeddedSound(const unsigned char* data, size_t size) {
     temp_file.close();
 
     const std::string path_string = temp_path.string();
-    const ma_result result = ma_engine_play_sound(&m_engine, path_string.c_str(), nullptr);
+
+    // Initialize sound with explicit no-looping flag
+    constexpr ma_uint32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION;
+    ma_result result =
+        ma_sound_init_from_file(&m_engine, path_string.c_str(), flags, nullptr, nullptr, &m_notification_sound);
+    if (result != MA_SUCCESS) {
+        std::cerr << "Failed to initialize sound. Error code: " << result << '\n';
+        return;
+    }
+
+    m_notification_sound_initialized = true;
+
+    // Explicitly disable looping
+    ma_sound_set_looping(&m_notification_sound, MA_FALSE);
+
+    result = ma_sound_start(&m_notification_sound);
     if (result != MA_SUCCESS) {
         std::cerr << "Failed to play sound. Error code: " << result << '\n';
+        stopNotificationSounds();
     }
 }
 

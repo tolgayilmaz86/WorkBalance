@@ -340,6 +340,8 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "long_break_duration_minutes": {},
     "auto_start_breaks": {},
     "auto_start_pomodoros": {},
+    "pomodoros_before_long_break": {},
+    "long_breaks_in_cycle": {},
     "overlay_position_x": {},
     "overlay_position_y": {},
     "main_window_x": {},
@@ -358,7 +360,15 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
     "standup_auto_loop": {},
     "eye_care_auto_loop": {},
     "start_with_windows": {},
-    "start_minimized": {}
+    "start_minimized": {},
+    "pomodoro_sound_enabled": {},
+    "pomodoro_sound_volume": {},
+    "water_sound_enabled": {},
+    "water_sound_volume": {},
+    "standup_sound_enabled": {},
+    "standup_sound_volume": {},
+    "eye_care_sound_enabled": {},
+    "eye_care_sound_volume": {}
   }},
   "current_task_index": {},
   "tasks": [
@@ -367,8 +377,9 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
 )",
         data.settings.pomodoro_duration_minutes, data.settings.short_break_duration_minutes,
         data.settings.long_break_duration_minutes, data.settings.auto_start_breaks ? "true" : "false",
-        data.settings.auto_start_pomodoros ? "true" : "false", data.settings.overlay_position_x,
-        data.settings.overlay_position_y, data.settings.main_window_x, data.settings.main_window_y,
+        data.settings.auto_start_pomodoros ? "true" : "false", data.settings.pomodoros_before_long_break,
+        data.settings.long_breaks_in_cycle, data.settings.overlay_position_x, data.settings.overlay_position_y,
+        data.settings.main_window_x, data.settings.main_window_y,
         data.settings.show_pomodoro_in_overlay ? "true" : "false",
         data.settings.show_water_in_overlay ? "true" : "false",
         data.settings.show_standup_in_overlay ? "true" : "false",
@@ -377,7 +388,11 @@ std::string PersistenceManager::serializeToJson(const PersistentData& data) {
         data.settings.eye_care_interval_minutes, data.settings.eye_care_break_seconds,
         data.settings.water_auto_loop ? "true" : "false", data.settings.standup_auto_loop ? "true" : "false",
         data.settings.eye_care_auto_loop ? "true" : "false", data.settings.start_with_windows ? "true" : "false",
-        data.settings.start_minimized ? "true" : "false", data.current_task_index, tasks_json);
+        data.settings.start_minimized ? "true" : "false", data.settings.pomodoro_sound_enabled ? "true" : "false",
+        data.settings.pomodoro_sound_volume, data.settings.water_sound_enabled ? "true" : "false",
+        data.settings.water_sound_volume, data.settings.standup_sound_enabled ? "true" : "false",
+        data.settings.standup_sound_volume, data.settings.eye_care_sound_enabled ? "true" : "false",
+        data.settings.eye_care_sound_volume, data.current_task_index, tasks_json);
 }
 
 std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std::string& json) {
@@ -394,6 +409,10 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
             extractJsonInt(settings_json, "long_break_duration_minutes", Configuration::DEFAULT_LONG_BREAK_MINUTES);
         data.settings.auto_start_breaks = extractJsonBool(settings_json, "auto_start_breaks", false);
         data.settings.auto_start_pomodoros = extractJsonBool(settings_json, "auto_start_pomodoros", false);
+        data.settings.pomodoros_before_long_break = extractJsonInt(settings_json, "pomodoros_before_long_break",
+                                                                   Configuration::DEFAULT_POMODOROS_BEFORE_LONG_BREAK);
+        data.settings.long_breaks_in_cycle =
+            extractJsonInt(settings_json, "long_breaks_in_cycle", Configuration::DEFAULT_LONG_BREAKS_IN_CYCLE);
         data.settings.overlay_position_x =
             extractJsonFloat(settings_json, "overlay_position_x", Configuration::DEFAULT_OVERLAY_POSITION_X);
         data.settings.overlay_position_y =
@@ -420,6 +439,23 @@ std::optional<PersistentData> PersistenceManager::deserializeFromJson(const std:
         // Startup settings
         data.settings.start_with_windows = extractJsonBool(settings_json, "start_with_windows", false);
         data.settings.start_minimized = extractJsonBool(settings_json, "start_minimized", true);
+        // Sound settings
+        data.settings.pomodoro_sound_enabled =
+            extractJsonBool(settings_json, "pomodoro_sound_enabled", Configuration::DEFAULT_SOUND_ENABLED);
+        data.settings.pomodoro_sound_volume =
+            extractJsonInt(settings_json, "pomodoro_sound_volume", Configuration::DEFAULT_SOUND_VOLUME);
+        data.settings.water_sound_enabled =
+            extractJsonBool(settings_json, "water_sound_enabled", Configuration::DEFAULT_SOUND_ENABLED);
+        data.settings.water_sound_volume =
+            extractJsonInt(settings_json, "water_sound_volume", Configuration::DEFAULT_SOUND_VOLUME);
+        data.settings.standup_sound_enabled =
+            extractJsonBool(settings_json, "standup_sound_enabled", Configuration::DEFAULT_SOUND_ENABLED);
+        data.settings.standup_sound_volume =
+            extractJsonInt(settings_json, "standup_sound_volume", Configuration::DEFAULT_SOUND_VOLUME);
+        data.settings.eye_care_sound_enabled =
+            extractJsonBool(settings_json, "eye_care_sound_enabled", Configuration::DEFAULT_SOUND_ENABLED);
+        data.settings.eye_care_sound_volume =
+            extractJsonInt(settings_json, "eye_care_sound_volume", Configuration::DEFAULT_SOUND_VOLUME);
     }
 
     // Extract current task index

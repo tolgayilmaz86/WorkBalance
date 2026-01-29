@@ -12,6 +12,9 @@ class MainWindow final : public WindowBase {
 
     void setOverlayMode(bool overlay_mode);
 
+    /// @brief Set the saved overlay position (used to restore position on first overlay mode switch)
+    void setSavedOverlayPosition(int x, int y);
+
     MainWindow(const MainWindow&) = delete;
     MainWindow& operator=(const MainWindow&) = delete;
 

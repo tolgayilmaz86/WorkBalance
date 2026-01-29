@@ -596,7 +596,7 @@ void EyeCareReminderView::renderControls() {
         }
     } else if (m_timer.isReminderActive()) {
         // Show "Start Break" button
-        if (renderStyledButton("START 20s BREAK", button_size, eye_color, false, m_imgui.buttonFont())) {
+        if (renderStyledButton("START", button_size, eye_color, false, m_imgui.buttonFont())) {
             if (m_callbacks.onStartBreak) {
                 m_callbacks.onStartBreak();
             }

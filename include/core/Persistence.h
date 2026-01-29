@@ -39,6 +39,9 @@ struct UserSettings {
     int long_break_duration_minutes = Configuration::DEFAULT_LONG_BREAK_MINUTES;
     bool auto_start_breaks = false;
     bool auto_start_pomodoros = false;
+    // Pomodoro cycle settings
+    int pomodoros_before_long_break = Configuration::DEFAULT_POMODOROS_BEFORE_LONG_BREAK;
+    int long_breaks_in_cycle = Configuration::DEFAULT_LONG_BREAKS_IN_CYCLE;
     // Window positions
     float overlay_position_x = Configuration::DEFAULT_OVERLAY_POSITION_X;
     float overlay_position_y = Configuration::DEFAULT_OVERLAY_POSITION_Y;
@@ -63,6 +66,15 @@ struct UserSettings {
     // Startup settings
     bool start_with_windows = false;
     bool start_minimized = true;
+    // Sound settings
+    bool pomodoro_sound_enabled = Configuration::DEFAULT_SOUND_ENABLED;
+    int pomodoro_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
+    bool water_sound_enabled = Configuration::DEFAULT_SOUND_ENABLED;
+    int water_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
+    bool standup_sound_enabled = Configuration::DEFAULT_SOUND_ENABLED;
+    int standup_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
+    bool eye_care_sound_enabled = Configuration::DEFAULT_SOUND_ENABLED;
+    int eye_care_sound_volume = Configuration::DEFAULT_SOUND_VOLUME;
 };
 
 /// @brief Persistent application data including tasks and settings

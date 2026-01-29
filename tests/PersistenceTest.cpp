@@ -163,6 +163,97 @@ TEST_F(PersistenceTest, SaveAndLoadWellnessSettings) {
     EXPECT_EQ(loaded.settings.eye_care_break_seconds, 30);
 }
 
+TEST_F(PersistenceTest, SaveAndLoadSoundSettings) {
+    PersistentData data;
+    // Set non-default values for all sound settings
+    data.settings.pomodoro_sound_enabled = false;
+    data.settings.pomodoro_sound_volume = 75;
+    data.settings.water_sound_enabled = false;
+    data.settings.water_sound_volume = 50;
+    data.settings.standup_sound_enabled = false;
+    data.settings.standup_sound_volume = 25;
+    data.settings.eye_care_sound_enabled = false;
+    data.settings.eye_care_sound_volume = 10;
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    EXPECT_FALSE(loaded.settings.pomodoro_sound_enabled);
+    EXPECT_EQ(loaded.settings.pomodoro_sound_volume, 75);
+    EXPECT_FALSE(loaded.settings.water_sound_enabled);
+    EXPECT_EQ(loaded.settings.water_sound_volume, 50);
+    EXPECT_FALSE(loaded.settings.standup_sound_enabled);
+    EXPECT_EQ(loaded.settings.standup_sound_volume, 25);
+    EXPECT_FALSE(loaded.settings.eye_care_sound_enabled);
+    EXPECT_EQ(loaded.settings.eye_care_sound_volume, 10);
+}
+
+TEST_F(PersistenceTest, SoundSettingsDefaultsAreCorrect) {
+    // Verify default values are correct when not specified
+    PersistentData data;
+    // Don't set any sound settings - use defaults
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    // All sound settings should be enabled by default
+    EXPECT_TRUE(loaded.settings.pomodoro_sound_enabled);
+    EXPECT_TRUE(loaded.settings.water_sound_enabled);
+    EXPECT_TRUE(loaded.settings.standup_sound_enabled);
+    EXPECT_TRUE(loaded.settings.eye_care_sound_enabled);
+    // Volume should be 100 by default
+    EXPECT_EQ(loaded.settings.pomodoro_sound_volume, Configuration::DEFAULT_SOUND_VOLUME);
+    EXPECT_EQ(loaded.settings.water_sound_volume, Configuration::DEFAULT_SOUND_VOLUME);
+    EXPECT_EQ(loaded.settings.standup_sound_volume, Configuration::DEFAULT_SOUND_VOLUME);
+    EXPECT_EQ(loaded.settings.eye_care_sound_volume, Configuration::DEFAULT_SOUND_VOLUME);
+}
+
+TEST_F(PersistenceTest, SaveAndLoadPomodoroCycleSettings) {
+    PersistentData data;
+    data.settings.pomodoros_before_long_break = 6;
+    data.settings.long_breaks_in_cycle = 2;
+    data.settings.auto_start_breaks = true;
+    data.settings.auto_start_pomodoros = true;
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    EXPECT_EQ(loaded.settings.pomodoros_before_long_break, 6);
+    EXPECT_EQ(loaded.settings.long_breaks_in_cycle, 2);
+    EXPECT_TRUE(loaded.settings.auto_start_breaks);
+    EXPECT_TRUE(loaded.settings.auto_start_pomodoros);
+}
+
+TEST_F(PersistenceTest, PomodoroCycleSettingsDefaultsAreCorrect) {
+    // Verify default values are correct when not specified
+    PersistentData data;
+    // Don't set any cycle settings - use defaults
+
+    auto save_result = m_persistence->save(data);
+    ASSERT_TRUE(save_result.has_value());
+
+    auto load_result = m_persistence->load();
+    ASSERT_TRUE(load_result.has_value());
+
+    const auto& loaded = load_result.value();
+    EXPECT_EQ(loaded.settings.pomodoros_before_long_break, Configuration::DEFAULT_POMODOROS_BEFORE_LONG_BREAK);
+    EXPECT_EQ(loaded.settings.long_breaks_in_cycle, Configuration::DEFAULT_LONG_BREAKS_IN_CYCLE);
+    EXPECT_FALSE(loaded.settings.auto_start_breaks);
+    EXPECT_FALSE(loaded.settings.auto_start_pomodoros);
+}
+
 TEST_F(PersistenceTest, SaveAndLoadTasks) {
     PersistentData data;
 
@@ -293,6 +384,9 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     data.settings.long_break_duration_minutes = 45;
     data.settings.auto_start_breaks = true;
     data.settings.auto_start_pomodoros = true;
+    // Pomodoro cycle settings
+    data.settings.pomodoros_before_long_break = 6;
+    data.settings.long_breaks_in_cycle = 2;
     data.settings.overlay_position_x = 123.456f;
     data.settings.overlay_position_y = 789.012f;
     data.settings.main_window_x = 1234;
@@ -311,6 +405,15 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     data.settings.standup_auto_loop = true;
     data.settings.eye_care_auto_loop = true;
     data.settings.start_minimized = false;
+    // Sound settings
+    data.settings.pomodoro_sound_enabled = false;
+    data.settings.pomodoro_sound_volume = 75;
+    data.settings.water_sound_enabled = false;
+    data.settings.water_sound_volume = 50;
+    data.settings.standup_sound_enabled = false;
+    data.settings.standup_sound_volume = 25;
+    data.settings.eye_care_sound_enabled = false;
+    data.settings.eye_care_sound_volume = 10;
 
     data.current_task_index = 5;
 
@@ -328,6 +431,9 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     EXPECT_EQ(loaded.settings.long_break_duration_minutes, 45);
     EXPECT_TRUE(loaded.settings.auto_start_breaks);
     EXPECT_TRUE(loaded.settings.auto_start_pomodoros);
+    // Pomodoro cycle settings
+    EXPECT_EQ(loaded.settings.pomodoros_before_long_break, 6);
+    EXPECT_EQ(loaded.settings.long_breaks_in_cycle, 2);
     EXPECT_FLOAT_EQ(loaded.settings.overlay_position_x, 123.456f);
     EXPECT_FLOAT_EQ(loaded.settings.overlay_position_y, 789.012f);
     EXPECT_EQ(loaded.settings.main_window_x, 1234);
@@ -346,6 +452,15 @@ TEST_F(PersistenceTest, AllSettingsPreservedInRoundTrip) {
     EXPECT_TRUE(loaded.settings.standup_auto_loop);
     EXPECT_TRUE(loaded.settings.eye_care_auto_loop);
     EXPECT_FALSE(loaded.settings.start_minimized);
+    // Sound settings
+    EXPECT_FALSE(loaded.settings.pomodoro_sound_enabled);
+    EXPECT_EQ(loaded.settings.pomodoro_sound_volume, 75);
+    EXPECT_FALSE(loaded.settings.water_sound_enabled);
+    EXPECT_EQ(loaded.settings.water_sound_volume, 50);
+    EXPECT_FALSE(loaded.settings.standup_sound_enabled);
+    EXPECT_EQ(loaded.settings.standup_sound_volume, 25);
+    EXPECT_FALSE(loaded.settings.eye_care_sound_enabled);
+    EXPECT_EQ(loaded.settings.eye_care_sound_volume, 10);
     EXPECT_EQ(loaded.current_task_index, 5);
 }
 

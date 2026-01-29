@@ -23,12 +23,18 @@ class AudioManager final : public IAudioService {
     void playHydrationSound() override;
     void playWalkSound() override;
     [[nodiscard]] bool isInitialized() const noexcept override;
+    void setVolume(int volume) override;
+    [[nodiscard]] int getVolume() const noexcept override;
 
   private:
     void playEmbeddedSound(const unsigned char* data, size_t size);
+    void stopNotificationSounds();
 
     ma_engine m_engine{};
+    ma_sound m_notification_sound{};
+    bool m_notification_sound_initialized = false;
     bool m_initialized = false;
+    int m_volume = 100; // 0-100 percentage
 };
 
 std::unique_ptr<IAudioService> createAudioService();

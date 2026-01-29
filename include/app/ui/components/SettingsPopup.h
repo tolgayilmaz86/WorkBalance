@@ -40,6 +40,9 @@ class SettingsPopup {
     /// @brief Renders the general/startup settings tab content
     void renderGeneralTab();
 
+    /// @brief Renders the sound settings tab content
+    void renderSoundTab();
+
     /// @brief Renders a duration input row with +/- buttons
     /// @param label The label for the row
     /// @param minusId ImGui ID for minus button

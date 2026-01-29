@@ -392,6 +392,14 @@ void MainWindowView::renderOverlayMode() {
     ImGui::PopStyleColor();
 
     const bool overlay_hovered = ImGui::IsWindowHovered();
+
+    // Handle double-click to exit overlay mode (same as pressing ESC)
+    if (overlay_hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+        if (m_callbacks.onToggleOverlayMode) {
+            m_callbacks.onToggleOverlayMode();
+        }
+    }
+
     updateWindowDragging(m_window.get(), overlay_hovered, m_state.main_overlay_dragging,
                          m_state.main_overlay_drag_offset);
 }

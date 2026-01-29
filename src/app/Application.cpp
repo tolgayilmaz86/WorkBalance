@@ -305,14 +305,14 @@ void Application::Impl::setupCallbacks() {
 
 void Application::Impl::updateTimer() {
     const int previous_remaining = m_timer.getRemainingTime();
-    [[maybe_unused]] const auto update_result = m_timer.update();
+    const bool timer_completed = m_timer.update();
 
     const int current_remaining = m_timer.getRemainingTime();
     if (current_remaining != previous_remaining) {
         updateWindowTitle(current_remaining);
     }
 
-    if (current_remaining <= 0 && m_timer.isRunning()) {
+    if (timer_completed) {
         handleTimerComplete();
     }
 }
@@ -320,17 +320,62 @@ void Application::Impl::updateTimer() {
 void Application::Impl::handleTimerComplete() {
     m_timer.stop();
 
-    withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
+    if (m_state.pomodoro_sound_enabled) {
+        withAudio([this](System::IAudioService& audio) {
+            audio.setVolume(m_state.pomodoro_sound_volume);
+            audio.playBellSound();
+        });
+    }
 
-    if (m_timer.getCurrentMode() == Core::TimerMode::Pomodoro) {
+    const Core::TimerMode current_mode = m_timer.getCurrentMode();
+
+    if (current_mode == Core::TimerMode::Pomodoro) {
+        // Increment task pomodoros
         if (m_state.current_task_index >= 0 && isValidTaskIndex(static_cast<size_t>(m_state.current_task_index))) {
             m_task_manager.incrementTaskPomodoros(m_state.current_task_index);
         }
-
         updatePomodoroCounters();
-    }
 
-    resetTimer();
+        // Track pomodoros in current cycle
+        m_state.pomodoros_in_current_cycle++;
+
+        // Determine next break type based on cycle
+        if (m_state.pomodoros_in_current_cycle >= m_state.pomodoros_before_long_break) {
+            // Time for a long break
+            setTimerMode(Core::TimerMode::LongBreak);
+            if (m_state.auto_start_breaks) {
+                m_timer.start();
+            }
+        } else {
+            // Time for a short break
+            setTimerMode(Core::TimerMode::ShortBreak);
+            if (m_state.auto_start_breaks) {
+                m_timer.start();
+            }
+        }
+    } else if (current_mode == Core::TimerMode::LongBreak) {
+        // Long break completed
+        m_state.long_breaks_taken_in_cycle++;
+
+        // Check if we've completed all long breaks in the cycle
+        if (m_state.long_breaks_taken_in_cycle >= m_state.long_breaks_in_cycle) {
+            // Reset cycle counters
+            m_state.pomodoros_in_current_cycle = 0;
+            m_state.long_breaks_taken_in_cycle = 0;
+        }
+
+        // Start next pomodoro
+        setTimerMode(Core::TimerMode::Pomodoro);
+        if (m_state.auto_start_pomodoros) {
+            m_timer.start();
+        }
+    } else if (current_mode == Core::TimerMode::ShortBreak) {
+        // Short break completed, start next pomodoro
+        setTimerMode(Core::TimerMode::Pomodoro);
+        if (m_state.auto_start_pomodoros) {
+            m_timer.start();
+        }
+    }
 }
 
 bool Application::Impl::isValidTaskIndex(size_t index) const noexcept {
@@ -489,6 +534,12 @@ void Application::Impl::loadPersistedData() {
     m_state.temp_short_break_duration = data.settings.short_break_duration_minutes;
     m_state.temp_long_break_duration = data.settings.long_break_duration_minutes;
 
+    // Restore pomodoro cycle settings
+    m_state.pomodoros_before_long_break = data.settings.pomodoros_before_long_break;
+    m_state.long_breaks_in_cycle = data.settings.long_breaks_in_cycle;
+    m_state.auto_start_breaks = data.settings.auto_start_breaks;
+    m_state.auto_start_pomodoros = data.settings.auto_start_pomodoros;
+
     // Restore overlay position
     m_state.overlay_position = ImVec2(data.settings.overlay_position_x, data.settings.overlay_position_y);
 
@@ -532,6 +583,16 @@ void Application::Impl::loadPersistedData() {
     m_state.start_with_windows = data.settings.start_with_windows;
     m_state.start_minimized = data.settings.start_minimized;
 
+    // Restore sound settings
+    m_state.pomodoro_sound_enabled = data.settings.pomodoro_sound_enabled;
+    m_state.pomodoro_sound_volume = data.settings.pomodoro_sound_volume;
+    m_state.water_sound_enabled = data.settings.water_sound_enabled;
+    m_state.water_sound_volume = data.settings.water_sound_volume;
+    m_state.standup_sound_enabled = data.settings.standup_sound_enabled;
+    m_state.standup_sound_volume = data.settings.standup_sound_volume;
+    m_state.eye_care_sound_enabled = data.settings.eye_care_sound_enabled;
+    m_state.eye_care_sound_volume = data.settings.eye_care_sound_volume;
+
     // Sync Windows startup registry with saved setting
     System::WindowsStartup::setStartupEnabled(m_state.start_with_windows);
 
@@ -560,6 +621,10 @@ void Application::Impl::applyPersistedWindowPositions() {
     const int overlay_x = static_cast<int>(m_state.overlay_position.x);
     const int overlay_y = static_cast<int>(m_state.overlay_position.y);
     m_overlay_window.setPosition(overlay_x, overlay_y);
+
+    // Also set the saved overlay position for main window's overlay mode
+    // This ensures first switch to overlay mode uses the persisted position
+    m_window.setSavedOverlayPosition(overlay_x, overlay_y);
 }
 
 void Application::Impl::savePersistedData() const {
@@ -570,6 +635,12 @@ void Application::Impl::savePersistedData() const {
     data.settings.pomodoro_duration_minutes = m_timer.getPomodoroDuration() / seconds_per_minute;
     data.settings.short_break_duration_minutes = m_timer.getShortBreakDuration() / seconds_per_minute;
     data.settings.long_break_duration_minutes = m_timer.getLongBreakDuration() / seconds_per_minute;
+
+    // Save pomodoro cycle settings
+    data.settings.pomodoros_before_long_break = m_state.pomodoros_before_long_break;
+    data.settings.long_breaks_in_cycle = m_state.long_breaks_in_cycle;
+    data.settings.auto_start_breaks = m_state.auto_start_breaks;
+    data.settings.auto_start_pomodoros = m_state.auto_start_pomodoros;
 
     // Save overlay position (get current position from window to ensure accuracy)
     const auto [overlay_x, overlay_y] = m_overlay_window.getPosition();
@@ -603,6 +674,16 @@ void Application::Impl::savePersistedData() const {
     // Save startup settings
     data.settings.start_with_windows = m_state.start_with_windows;
     data.settings.start_minimized = m_state.start_minimized;
+
+    // Save sound settings
+    data.settings.pomodoro_sound_enabled = m_state.pomodoro_sound_enabled;
+    data.settings.pomodoro_sound_volume = m_state.pomodoro_sound_volume;
+    data.settings.water_sound_enabled = m_state.water_sound_enabled;
+    data.settings.water_sound_volume = m_state.water_sound_volume;
+    data.settings.standup_sound_enabled = m_state.standup_sound_enabled;
+    data.settings.standup_sound_volume = m_state.standup_sound_volume;
+    data.settings.eye_care_sound_enabled = m_state.eye_care_sound_enabled;
+    data.settings.eye_care_sound_volume = m_state.eye_care_sound_volume;
 
     // Save tasks
     const auto tasks = m_task_manager.getTasks();
@@ -682,7 +763,12 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
     // Play type-specific completion sound
     switch (type) {
         case Core::WellnessType::Water:
-            withAudio([](System::IAudioService& audio) { audio.playHydrationSound(); });
+            if (m_state.water_sound_enabled) {
+                withAudio([this](System::IAudioService& audio) {
+                    audio.setVolume(m_state.water_sound_volume);
+                    audio.playHydrationSound();
+                });
+            }
             // Auto-restart if loop is enabled
             if (m_state.water_auto_loop && m_water_timer) {
                 m_water_timer->acknowledgeReminder();
@@ -691,14 +777,24 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
             }
             break;
         case Core::WellnessType::Standup:
-            withAudio([](System::IAudioService& audio) { audio.playWalkSound(); });
+            if (m_state.standup_sound_enabled) {
+                withAudio([this](System::IAudioService& audio) {
+                    audio.setVolume(m_state.standup_sound_volume);
+                    audio.playWalkSound();
+                });
+            }
             // If break completed, restart interval timer
             if (m_standup_timer && !m_standup_timer->isInBreak()) {
                 m_standup_timer->start();
             }
             break;
         case Core::WellnessType::EyeStrain:
-            withAudio([](System::IAudioService& audio) { audio.playBellSound(); });
+            if (m_state.eye_care_sound_enabled) {
+                withAudio([this](System::IAudioService& audio) {
+                    audio.setVolume(m_state.eye_care_sound_volume);
+                    audio.playBellSound();
+                });
+            }
             // If break completed, restart interval timer
             if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {
                 m_eye_care_timer->start();

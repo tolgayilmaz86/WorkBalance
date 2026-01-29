@@ -33,6 +33,10 @@ struct Configuration {
     static constexpr int DEFAULT_SHORT_BREAK_MINUTES = 5;
     static constexpr int DEFAULT_LONG_BREAK_MINUTES = 15;
 
+    // Pomodoro cycle defaults
+    static constexpr int DEFAULT_POMODOROS_BEFORE_LONG_BREAK = 4;
+    static constexpr int DEFAULT_LONG_BREAKS_IN_CYCLE = 1;
+
     // Wellness defaults (in minutes) for UI/settings
     static constexpr int DEFAULT_WATER_INTERVAL_MINUTES = 30;
     static constexpr int DEFAULT_WATER_DAILY_GOAL = 8;
@@ -70,6 +74,10 @@ struct Configuration {
     static constexpr int DEFAULT_ESTIMATED_POMODOROS = 1;
     static constexpr int DEFAULT_COMPLETED_POMODOROS = 0;
     static constexpr int MAX_TASK_NAME_LENGTH = 256;
+
+    // Sound defaults
+    static constexpr bool DEFAULT_SOUND_ENABLED = true;
+    static constexpr int DEFAULT_SOUND_VOLUME = 100; // 0-100 percentage
 };
 
 } // namespace WorkBalance::Core

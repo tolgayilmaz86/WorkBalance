@@ -69,6 +69,12 @@ struct AppState {
     int temp_pomodoro_duration = Core::Configuration::DEFAULT_POMODORO_MINUTES;
     int temp_short_break_duration = Core::Configuration::DEFAULT_SHORT_BREAK_MINUTES;
     int temp_long_break_duration = Core::Configuration::DEFAULT_LONG_BREAK_MINUTES;
+    int pomodoros_before_long_break = Core::Configuration::DEFAULT_POMODOROS_BEFORE_LONG_BREAK;
+    int long_breaks_in_cycle = Core::Configuration::DEFAULT_LONG_BREAKS_IN_CYCLE;
+
+    // ===== Pomodoro Cycle Tracking =====
+    int pomodoros_in_current_cycle = 0;
+    int long_breaks_taken_in_cycle = 0;
 
     // ===== Settings Editing - Water =====
     int temp_water_interval = Core::Configuration::DEFAULT_WATER_INTERVAL_MINUTES;
@@ -102,6 +108,10 @@ struct AppState {
     bool show_standup_in_overlay = true;
     bool show_eye_care_in_overlay = true;
 
+    // ===== Auto-Start Settings =====
+    bool auto_start_breaks = false;
+    bool auto_start_pomodoros = false;
+
     // ===== Wellness Auto-Loop Settings =====
     bool water_auto_loop = false;
     bool standup_auto_loop = false;
@@ -110,6 +120,16 @@ struct AppState {
     // ===== Startup Settings =====
     bool start_with_windows = false;
     bool start_minimized = true;
+
+    // ===== Sound Settings =====
+    bool pomodoro_sound_enabled = Core::Configuration::DEFAULT_SOUND_ENABLED;
+    int pomodoro_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
+    bool water_sound_enabled = Core::Configuration::DEFAULT_SOUND_ENABLED;
+    int water_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
+    bool standup_sound_enabled = Core::Configuration::DEFAULT_SOUND_ENABLED;
+    int standup_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
+    bool eye_care_sound_enabled = Core::Configuration::DEFAULT_SOUND_ENABLED;
+    int eye_care_sound_volume = Core::Configuration::DEFAULT_SOUND_VOLUME;
 };
 
 // Utility class for time formatting

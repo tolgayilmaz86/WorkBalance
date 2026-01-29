@@ -99,6 +99,14 @@ void SettingsPopup::renderTabBar() {
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem((std::string(ICON_FA_VOLUME_UP) + " Sound").c_str())) {
+            ImGui::BeginChild("SoundContent", ImVec2(CONTENT_WIDTH, TAB_CONTENT_HEIGHT), ImGuiChildFlags_None);
+            ImGui::Spacing();
+            renderSoundTab();
+            ImGui::EndChild();
+            ImGui::EndTabItem();
+        }
+
         if (ImGui::BeginTabItem((std::string(ICON_FA_COG) + " General").c_str())) {
             ImGui::BeginChild("GeneralContent", ImVec2(CONTENT_WIDTH, TAB_CONTENT_HEIGHT), ImGuiChildFlags_None);
             ImGui::Spacing();
@@ -137,6 +145,26 @@ void SettingsPopup::renderPomodoroTab() {
                       m_state.temp_short_break_duration, 1, 30);
     renderDurationRow("Long Break", "##longbreak_minus", "##longbreak", "##longbreak_plus",
                       m_state.temp_long_break_duration, 1, 60);
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+    ImGui::Text(ICON_FA_SYNC " Pomodoro Cycle");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    renderDurationRow("Pomodoros before long break", "##pom_cycle_minus", "##pom_cycle", "##pom_cycle_plus",
+                      m_state.pomodoros_before_long_break, 1, 10);
+    renderDurationRow("Long breaks per cycle", "##long_breaks_minus", "##long_breaks", "##long_breaks_plus",
+                      m_state.long_breaks_in_cycle, 1, 5);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Checkbox("Auto-start breaks after pomodoro", &m_state.auto_start_breaks);
+    ImGui::Checkbox("Auto-start pomodoro after break", &m_state.auto_start_pomodoros);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -227,6 +255,79 @@ void SettingsPopup::renderGeneralTab() {
     ImGui::TextWrapped("When 'Start minimized' is enabled, the application will start minimized to the system tray "
                        "when launched automatically at Windows startup. Manual launch always shows the window.");
     ImGui::PopStyleColor();
+}
+
+void SettingsPopup::renderSoundTab() {
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 8.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.95f, 0.95f, 0.95f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.4f, 0.6f, 0.9f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
+
+    // Pomodoro Timer Sound
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.35f, 0.35f, 1.0f));
+    ImGui::Text(ICON_FA_CLOCK " Pomodoro Timer");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    ImGui::Checkbox("Enable sound##pomodoro", &m_state.pomodoro_sound_enabled);
+    if (m_state.pomodoro_sound_enabled) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(150.0f);
+        ImGui::SliderInt("Volume##pomodoro", &m_state.pomodoro_sound_volume, 0, 100, "%d%%");
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Water Reminder Sound
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.6f, 0.9f, 1.0f));
+    ImGui::Text(ICON_FA_TINT " Water Reminder");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    ImGui::Checkbox("Enable sound##water", &m_state.water_sound_enabled);
+    if (m_state.water_sound_enabled) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(150.0f);
+        ImGui::SliderInt("Volume##water", &m_state.water_sound_volume, 0, 100, "%d%%");
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Standup Reminder Sound
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.5f, 0.9f, 1.0f));
+    ImGui::Text(ICON_FA_WALKING " Stand Up Reminder");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    ImGui::Checkbox("Enable sound##standup", &m_state.standup_sound_enabled);
+    if (m_state.standup_sound_enabled) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(150.0f);
+        ImGui::SliderInt("Volume##standup", &m_state.standup_sound_volume, 0, 100, "%d%%");
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Eye Care Reminder Sound
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.6f, 1.0f));
+    ImGui::Text(ICON_FA_EYE " Eye Care Reminder");
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    ImGui::Checkbox("Enable sound##eyecare", &m_state.eye_care_sound_enabled);
+    if (m_state.eye_care_sound_enabled) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(150.0f);
+        ImGui::SliderInt("Volume##eyecare", &m_state.eye_care_sound_volume, 0, 100, "%d%%");
+    }
+
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(2);
 }
 
 void SettingsPopup::renderButtons() {
