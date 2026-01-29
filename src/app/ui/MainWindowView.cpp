@@ -258,7 +258,7 @@ void MainWindowView::renderWaterContent() {
     }
     ImGui::Spacing();
 
-    if (m_water_timer) {
+    if (m_water_timer != nullptr) {
         WaterReminderView view(m_imgui, *m_water_timer, m_state,
                                WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onWaterToggle,
                                                      .onAcknowledge = m_wellness_callbacks.onWaterAcknowledge,
@@ -276,7 +276,7 @@ void MainWindowView::renderStandupContent() {
     }
     ImGui::Spacing();
 
-    if (m_standup_timer) {
+    if (m_standup_timer != nullptr) {
         StandupReminderView view(m_imgui, *m_standup_timer, m_state,
                                  WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onStandupToggle,
                                                        .onAcknowledge = m_wellness_callbacks.onStandupAcknowledge,
@@ -295,7 +295,7 @@ void MainWindowView::renderEyeCareContent() {
     }
     ImGui::Spacing();
 
-    if (m_eye_care_timer) {
+    if (m_eye_care_timer != nullptr) {
         EyeCareReminderView view(m_imgui, *m_eye_care_timer, m_state,
                                  WellnessViewCallbacks{.onToggleTimer = m_wellness_callbacks.onEyeCareToggle,
                                                        .onAcknowledge = m_wellness_callbacks.onEyeCareAcknowledge,
@@ -310,12 +310,15 @@ void MainWindowView::renderEyeCareContent() {
 void MainWindowView::renderOverlayMode() {
     // Count active wellness timers that are visible in overlay to decide format
     int active_wellness_count = 0;
-    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay)
+    if (m_water_timer != nullptr && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
         active_wellness_count++;
-    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay)
+    }
+    if (m_standup_timer != nullptr && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
         active_wellness_count++;
-    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay)
+    }
+    if (m_eye_care_timer != nullptr && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
         active_wellness_count++;
+    }
 
     // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
     // Use compact format for all timers when multiple are active
@@ -333,23 +336,26 @@ void MainWindowView::renderOverlayMode() {
     }
 
     // Add wellness timers if they exist, are running, and enabled in overlay
-    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
-        if (!display_str.empty())
+    if (m_water_timer != nullptr && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
     }
-    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
-        if (!display_str.empty())
+    if (m_standup_timer != nullptr && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
     }
-    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
-        if (!display_str.empty())
+    if (m_eye_care_timer != nullptr && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
@@ -428,15 +434,15 @@ void MainWindowView::renderHeader() {
         m_state.temp_short_break_duration = m_timer.getShortBreakDuration() / 60;
         m_state.temp_long_break_duration = m_timer.getLongBreakDuration() / 60;
         // Wellness settings
-        if (m_water_timer) {
+        if (m_water_timer != nullptr) {
             m_state.temp_water_interval = m_water_timer->getIntervalSeconds() / 60;
             m_state.temp_water_daily_goal = m_state.water_daily_goal;
         }
-        if (m_standup_timer) {
+        if (m_standup_timer != nullptr) {
             m_state.temp_standup_interval = m_standup_timer->getIntervalSeconds() / 60;
             m_state.temp_standup_duration = m_standup_timer->getBreakDurationSeconds() / 60;
         }
-        if (m_eye_care_timer) {
+        if (m_eye_care_timer != nullptr) {
             m_state.temp_eye_interval = m_eye_care_timer->getIntervalSeconds() / 60;
             m_state.temp_eye_break_duration = m_eye_care_timer->getBreakDurationSeconds();
         }
@@ -829,12 +835,14 @@ void MainWindowView::renderHelpPopup() {
 
 void MainWindowView::renderCurrentTask() {
     const auto tasks = m_task_manager.getTasks();
-    if (tasks.empty() || m_state.current_task_index >= static_cast<int>(tasks.size())) {
+    if (tasks.empty() || std::cmp_greater_equal(m_state.current_task_index, tasks.size())) {
         return;
     }
 
-    const std::string current_task =
-        "#" + std::to_string(m_state.current_task_index + 1) + " " + tasks[m_state.current_task_index].name;
+    const auto& task = tasks[m_state.current_task_index];
+    const std::string current_task = "#" + std::to_string(m_state.current_task_index + 1) + " " + task.name + " (" +
+                                     std::to_string(task.completed_pomodoros) + "/" +
+                                     std::to_string(task.estimated_pomodoros) + ")";
 
     const float window_width = ImGui::GetWindowSize().x;
     const float text_width = ImGui::CalcTextSize(current_task.c_str()).x;

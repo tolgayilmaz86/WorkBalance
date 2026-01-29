@@ -184,6 +184,10 @@ void MainWindow::setSavedOverlayPosition(int x, int y) {
     m_saved_overlay_y = y;
 }
 
+std::pair<int, int> MainWindow::getSavedOverlayPosition() const noexcept {
+    return {m_saved_overlay_x, m_saved_overlay_y};
+}
+
 void MainWindow::setOverlayMode(bool overlay_mode) {
     if (m_window == nullptr) {
         return;

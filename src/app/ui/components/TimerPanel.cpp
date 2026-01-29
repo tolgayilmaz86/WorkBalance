@@ -50,20 +50,31 @@ void TimerPanel::renderModeButtons() {
     const float total_width = (button_width * 3.0f) + (ImGui::GetStyle().ItemSpacing.x * 2.0f);
     ImGui::SetCursorPosX((window_width - total_width) * 0.5f);
 
+    const bool timer_running = m_timer.isRunning();
+
     auto render_button = [&](const char* label, Core::TimerMode mode) {
         const bool active = (m_timer.getCurrentMode() == mode);
+
+        // Style: active mode is highlighted, other modes are dimmed if timer is running
         if (active) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
+        } else if (timer_running) {
+            // Dim non-active buttons when timer is running (they're disabled)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.05f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.4f));
         }
 
         if (ImGui::Button(label, ImVec2(button_width, 40.0f))) {
-            if (m_callbacks.onModeChange) {
+            // Only change mode if timer is not running and mode is different
+            if (!timer_running && !active && m_callbacks.onModeChange) {
                 m_callbacks.onModeChange(mode);
             }
         }
 
         if (active) {
             ImGui::PopStyleColor();
+        } else if (timer_running) {
+            ImGui::PopStyleColor(2);
         }
     };
 

@@ -4,32 +4,32 @@
 
 #include <cmath>
 #include <format>
+#include <numbers>
 #include <string>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 namespace WorkBalance::App::UI {
 
 namespace {
 // Helper to format time as MM:SS
 [[nodiscard]] std::string formatTime(int total_seconds) {
-    if (total_seconds < 0)
+    if (total_seconds < 0) {
         total_seconds = 0;
+    }
     return std::format("{}:{:02}", total_seconds / 60, total_seconds % 60);
 }
 
 // Helper to render centered text
 void renderCenteredText(const char* text, ImFont* font = nullptr) {
-    if (font)
+    if (font != nullptr) {
         ImGui::PushFont(font);
+    }
     const float window_width = ImGui::GetWindowSize().x;
     const float text_width = ImGui::CalcTextSize(text).x;
     ImGui::SetCursorPosX((window_width - text_width) * 0.5f);
     ImGui::TextUnformatted(text);
-    if (font)
+    if (font != nullptr) {
         ImGui::PopFont();
+    }
 }
 
 // Helper to render a styled button matching the Pomodoro START/PAUSE button style
@@ -161,8 +161,8 @@ void renderCircularProgress(float progress, float radius, const ImVec4& color, c
 
     // Progress arc
     if (progress > 0.0f) {
-        const float start_angle = -static_cast<float>(M_PI) * 0.5f;
-        const float end_angle = start_angle + (2.0f * static_cast<float>(M_PI) * progress);
+        const float start_angle = -std::numbers::pi_v<float> * 0.5f;
+        const float end_angle = start_angle + (2.0f * std::numbers::pi_v<float> * progress);
         draw_list->PathArcTo(actual_center, radius, start_angle, end_angle, 64);
         draw_list->PathStroke(ImGui::ColorConvertFloat4ToU32(color), 0, 6.0f);
     }

@@ -25,8 +25,9 @@ void TaskListPanel::render() {
     constexpr float padding = 40.0f;
     constexpr float extra_bottom_spacing = 30.0f;
 
-    const float total_height = padding + header_height + (task_count * (task_item_height + task_spacing)) +
-                               add_task_height + extra_bottom_spacing;
+    const float total_height = padding + header_height +
+                               (static_cast<float>(task_count) * (task_item_height + task_spacing)) + add_task_height +
+                               extra_bottom_spacing;
     const float panel_height = std::max(400.0f, total_height);
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1.0f, 1.0f, 1.0f, 0.05f));

@@ -31,11 +31,10 @@ bool WellnessTimer::update() noexcept {
                 m_remaining_time = m_interval_seconds;
                 ++m_completed_count;
                 return true;
-            } else {
-                // Interval completed, trigger reminder
-                m_reminder_active = true;
-                return true;
             }
+            // Interval completed, trigger reminder
+            m_reminder_active = true;
+            return true;
         }
     }
 

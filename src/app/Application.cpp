@@ -429,6 +429,13 @@ void Application::Impl::toggleTimer() {
 void Application::Impl::toggleOverlayMode() {
     m_state.main_window_overlay_mode = !m_state.main_window_overlay_mode;
     m_window.setOverlayMode(m_state.main_window_overlay_mode);
+
+    // Sync overlay position back to state for persistence
+    // MainWindow saves the overlay position when switching modes
+    const auto [overlay_x, overlay_y] = m_window.getSavedOverlayPosition();
+    if (overlay_x >= 0 && overlay_y >= 0) {
+        m_state.overlay_position = ImVec2(static_cast<float>(overlay_x), static_cast<float>(overlay_y));
+    }
 }
 
 void Application::Impl::requestClose() {
@@ -661,10 +668,10 @@ void Application::Impl::savePersistedData() const {
     data.settings.auto_start_breaks = m_state.auto_start_breaks;
     data.settings.auto_start_pomodoros = m_state.auto_start_pomodoros;
 
-    // Save overlay position (get current position from window to ensure accuracy)
-    const auto [overlay_x, overlay_y] = m_overlay_window.getPosition();
-    data.settings.overlay_position_x = static_cast<float>(overlay_x);
-    data.settings.overlay_position_y = static_cast<float>(overlay_y);
+    // Save overlay position from state (which is updated during dragging)
+    // Note: Don't use m_overlay_window.getPosition() as hidden windows may return incorrect values
+    data.settings.overlay_position_x = m_state.overlay_position.x;
+    data.settings.overlay_position_y = m_state.overlay_position.y;
 
     // Save main window position (get current position from window)
     const auto [win_x, win_y] = m_window.getPosition();
@@ -805,33 +812,45 @@ void Application::Impl::handleWellnessTimerComplete(Core::WellnessType type) {
             }
             break;
         case Core::WellnessType::Standup:
-            if (m_state.standup_sound_enabled) {
-                withAudio([this](System::IAudioService& audio) {
-                    audio.setVolume(m_state.standup_sound_volume);
-                    audio.playWalkSound();
-                });
-            }
-            if (m_state.standup_notification_enabled && m_notifications && m_notifications->isSupported()) {
-                m_notifications->showStandupReminder();
-            }
-            // If break completed, restart interval timer
-            if (m_standup_timer && !m_standup_timer->isInBreak()) {
-                m_standup_timer->start();
+            // Check if this was a break completing vs interval completing
+            if (m_standup_timer && m_standup_timer->isReminderActive()) {
+                // Interval completed - show reminder, wait for user action
+                if (m_state.standup_sound_enabled) {
+                    withAudio([this](System::IAudioService& audio) {
+                        audio.setVolume(m_state.standup_sound_volume);
+                        audio.playWalkSound();
+                    });
+                }
+                if (m_state.standup_notification_enabled && m_notifications && m_notifications->isSupported()) {
+                    m_notifications->showStandupReminder();
+                }
+            } else {
+                // Break completed - restart interval timer
+                if (m_standup_timer) {
+                    m_standup_timer->reset();
+                    m_standup_timer->start();
+                }
             }
             break;
         case Core::WellnessType::EyeStrain:
-            if (m_state.eye_care_sound_enabled) {
-                withAudio([this](System::IAudioService& audio) {
-                    audio.setVolume(m_state.eye_care_sound_volume);
-                    audio.playBellSound();
-                });
-            }
-            if (m_state.eye_care_notification_enabled && m_notifications && m_notifications->isSupported()) {
-                m_notifications->showEyeCareReminder();
-            }
-            // If break completed, restart interval timer
-            if (m_eye_care_timer && !m_eye_care_timer->isInBreak()) {
-                m_eye_care_timer->start();
+            // Check if this was a break completing vs interval completing
+            if (m_eye_care_timer && m_eye_care_timer->isReminderActive()) {
+                // Interval completed - show reminder, wait for user action
+                if (m_state.eye_care_sound_enabled) {
+                    withAudio([this](System::IAudioService& audio) {
+                        audio.setVolume(m_state.eye_care_sound_volume);
+                        audio.playBellSound();
+                    });
+                }
+                if (m_state.eye_care_notification_enabled && m_notifications && m_notifications->isSupported()) {
+                    m_notifications->showEyeCareReminder();
+                }
+            } else {
+                // Break completed - restart interval timer
+                if (m_eye_care_timer) {
+                    m_eye_care_timer->reset();
+                    m_eye_care_timer->start();
+                }
             }
             break;
         default:

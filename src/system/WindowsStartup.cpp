@@ -19,14 +19,14 @@ std::string WindowsStartup::getStartupCommand() {
 }
 
 bool WindowsStartup::isRegistered() {
-    HKEY hKey;
+    HKEY hKey = nullptr;
     if (RegOpenKeyExA(HKEY_CURRENT_USER, STARTUP_KEY, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
         return false;
     }
 
-    char value[MAX_PATH];
+    char value[MAX_PATH]{};
     DWORD valueSize = sizeof(value);
-    DWORD type;
+    DWORD type = 0;
     bool registered =
         (RegQueryValueExA(hKey, APP_NAME, nullptr, &type, reinterpret_cast<BYTE*>(value), &valueSize) == ERROR_SUCCESS);
 
@@ -35,7 +35,7 @@ bool WindowsStartup::isRegistered() {
 }
 
 bool WindowsStartup::registerStartup() {
-    HKEY hKey;
+    HKEY hKey = nullptr;
     if (RegOpenKeyExA(HKEY_CURRENT_USER, STARTUP_KEY, 0, KEY_WRITE, &hKey) != ERROR_SUCCESS) {
         return false;
     }
@@ -54,7 +54,7 @@ bool WindowsStartup::registerStartup() {
 }
 
 bool WindowsStartup::unregisterStartup() {
-    HKEY hKey;
+    HKEY hKey = nullptr;
     if (RegOpenKeyExA(HKEY_CURRENT_USER, STARTUP_KEY, 0, KEY_WRITE, &hKey) != ERROR_SUCCESS) {
         return false;
     }
@@ -66,11 +66,7 @@ bool WindowsStartup::unregisterStartup() {
 }
 
 bool WindowsStartup::setStartupEnabled(bool enabled) {
-    if (enabled) {
-        return registerStartup();
-    } else {
-        return unregisterStartup();
-    }
+    return enabled ? registerStartup() : unregisterStartup();
 }
 
 #else

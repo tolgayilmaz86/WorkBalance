@@ -3,10 +3,25 @@
 #include <iostream>
 
 #ifdef _WIN32
+#include <Windows.h>
 #include <wintoastlib.h>
 using namespace WinToastLib;
 
 namespace {
+
+// Convert UTF-8 string to UTF-16 wstring
+std::wstring utf8ToWide(std::string_view utf8) {
+    if (utf8.empty()) {
+        return {};
+    }
+    const int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), nullptr, 0);
+    if (size_needed <= 0) {
+        return {};
+    }
+    std::wstring result(static_cast<size_t>(size_needed), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), result.data(), size_needed);
+    return result;
+}
 
 class ToastHandler : public IWinToastHandler {
   public:
@@ -86,8 +101,8 @@ void NotificationManager::showNotification(std::string_view title, std::string_v
     }
 
     WinToastTemplate templ(WinToastTemplate::Text02);
-    templ.setTextField(std::wstring(title.begin(), title.end()), WinToastTemplate::FirstLine);
-    templ.setTextField(std::wstring(message.begin(), message.end()), WinToastTemplate::SecondLine);
+    templ.setTextField(utf8ToWide(title), WinToastTemplate::FirstLine);
+    templ.setTextField(utf8ToWide(message), WinToastTemplate::SecondLine);
     templ.setDuration(WinToastTemplate::Short);
 
     (void)WinToast::instance()->showToast(templ, new ToastHandler());

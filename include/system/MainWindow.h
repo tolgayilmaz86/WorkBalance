@@ -15,6 +15,9 @@ class MainWindow final : public WindowBase {
     /// @brief Set the saved overlay position (used to restore position on first overlay mode switch)
     void setSavedOverlayPosition(int x, int y);
 
+    /// @brief Get the saved overlay position
+    [[nodiscard]] std::pair<int, int> getSavedOverlayPosition() const noexcept;
+
     MainWindow(const MainWindow&) = delete;
     MainWindow& operator=(const MainWindow&) = delete;
 

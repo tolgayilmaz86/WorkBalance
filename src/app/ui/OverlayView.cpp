@@ -14,12 +14,15 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
 
     // Count active wellness timers that are visible in overlay to decide format
     int active_wellness_count = 0;
-    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay)
+    if (m_water_timer != nullptr && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
         active_wellness_count++;
-    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay)
+    }
+    if (m_standup_timer != nullptr && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
         active_wellness_count++;
-    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay)
+    }
+    if (m_eye_care_timer != nullptr && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
         active_wellness_count++;
+    }
 
     // Build horizontal compact display: 🕐 25:00 | 💧 45m | 🚶 30m | 👁 20m
     // Use compact format for all timers when multiple are active
@@ -37,23 +40,26 @@ void OverlayView::renderContent(System::OverlayWindow& overlay_window) {
     }
 
     // Add wellness timers if they exist, are running, and enabled in overlay
-    if (m_water_timer && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
-        if (!display_str.empty())
+    if (m_water_timer != nullptr && m_water_timer->isRunning() && m_state.show_water_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Water);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_water_timer->getRemainingTime());
     }
-    if (m_standup_timer && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
-        if (!display_str.empty())
+    if (m_standup_timer != nullptr && m_standup_timer->isRunning() && m_state.show_standup_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::Standup);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_standup_timer->getRemainingTime());
     }
-    if (m_eye_care_timer && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
-        if (!display_str.empty())
+    if (m_eye_care_timer != nullptr && m_eye_care_timer->isRunning() && m_state.show_eye_care_in_overlay) {
+        if (!display_str.empty()) {
             display_str += "  |  ";
+        }
         display_str += WorkBalance::TimeFormatter::getWellnessIcon(Core::WellnessType::EyeStrain);
         display_str += " ";
         display_str += WorkBalance::TimeFormatter::formatTimeCompact(m_eye_care_timer->getRemainingTime());
@@ -168,7 +174,7 @@ void OverlayView::renderFrame(System::OverlayWindow& overlay_window) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    m_imgui.render();
+    ImGuiLayer::render();
 
     glDisable(GL_BLEND);
 }
