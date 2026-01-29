@@ -108,6 +108,7 @@ struct AppState {
     bool eye_care_auto_loop = false;
 
     // ===== Startup Settings =====
+    bool start_with_windows = false;
     bool start_minimized = true;
 };
 

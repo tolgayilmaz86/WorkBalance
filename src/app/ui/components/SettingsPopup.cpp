@@ -5,6 +5,7 @@
 
 // Font Awesome icons
 #include "assets/fonts/IconsFontAwesome5Pro.h"
+#include "system/WindowsStartup.h"
 
 namespace WorkBalance::App::UI::Components {
 
@@ -214,11 +215,17 @@ void SettingsPopup::renderGeneralTab() {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Checkbox("Start minimized when launched at Windows startup", &m_state.start_minimized);
+    // Start with Windows checkbox - applies immediately when changed
+    if (ImGui::Checkbox("Start with Windows", &m_state.start_with_windows)) {
+        System::WindowsStartup::setStartupEnabled(m_state.start_with_windows);
+    }
+    ImGui::Spacing();
+
+    ImGui::Checkbox("Start minimized to system tray", &m_state.start_minimized);
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
-    ImGui::TextWrapped("When enabled, the application will start minimized to the system tray if launched "
-                       "automatically at Windows startup. Manual launch always shows the window.");
+    ImGui::TextWrapped("When 'Start minimized' is enabled, the application will start minimized to the system tray "
+                       "when launched automatically at Windows startup. Manual launch always shows the window.");
     ImGui::PopStyleColor();
 }
 

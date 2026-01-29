@@ -122,6 +122,7 @@ if(WIN32)
     src/system/OverlayWindow.cpp
     src/system/SystemTray.cpp
     src/system/WindowBase.cpp
+    src/system/WindowsStartup.cpp
         assets/app.rc
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp
@@ -165,6 +166,7 @@ else()
     src/system/OverlayWindow.cpp
     src/system/SystemTray.cpp
     src/system/WindowBase.cpp
+    src/system/WindowsStartup.cpp
         ${EMBEDDED_RESOURCES_DIR}/click_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/bell_wav.cpp
         ${EMBEDDED_RESOURCES_DIR}/hydration_wav.cpp

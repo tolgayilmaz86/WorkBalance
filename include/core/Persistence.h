@@ -61,6 +61,7 @@ struct UserSettings {
     bool standup_auto_loop = false;
     bool eye_care_auto_loop = false;
     // Startup settings
+    bool start_with_windows = false;
     bool start_minimized = true;
 };
 

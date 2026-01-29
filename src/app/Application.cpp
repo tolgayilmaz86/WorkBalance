@@ -26,6 +26,7 @@
 #include <system/OverlayWindow.h>
 #include <system/SystemTray.h>
 #include <system/WindowBase.h>
+#include <system/WindowsStartup.h>
 #include <ui/AppState.h>
 
 namespace WorkBalance::App {
@@ -528,7 +529,11 @@ void Application::Impl::loadPersistedData() {
     m_state.eye_care_auto_loop = data.settings.eye_care_auto_loop;
 
     // Restore startup settings
+    m_state.start_with_windows = data.settings.start_with_windows;
     m_state.start_minimized = data.settings.start_minimized;
+
+    // Sync Windows startup registry with saved setting
+    System::WindowsStartup::setStartupEnabled(m_state.start_with_windows);
 
     // Restore tasks
     for (const auto& task : data.tasks) {
@@ -596,6 +601,7 @@ void Application::Impl::savePersistedData() const {
     data.settings.eye_care_auto_loop = m_state.eye_care_auto_loop;
 
     // Save startup settings
+    data.settings.start_with_windows = m_state.start_with_windows;
     data.settings.start_minimized = m_state.start_minimized;
 
     // Save tasks
