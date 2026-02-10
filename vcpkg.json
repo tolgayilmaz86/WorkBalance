@@ -1,6 +1,7 @@
 {
   "name": "work-balance",
   "version": "1.0.0",
+  "builtin-baseline": "29ff5b8131d0c6c8fcb8fbaef35992f0d507cd7c",
   "description": "WorkBalance - A modern C++23 ImGui application for work-life balance tracking",
   "dependencies": [
     {
