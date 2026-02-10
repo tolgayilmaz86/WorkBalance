@@ -19,6 +19,7 @@ class TaskListPanel {
         std::function<void(size_t index)> onTaskRemoved;
         std::function<void(size_t index, std::string_view name, int estimated, int completed)> onTaskUpdated;
         std::function<void(size_t index)> onTaskToggled;
+        std::function<void(size_t from_index, size_t to_index)> onTaskMoved;
     };
 
     /// @brief Constructs the task list panel component

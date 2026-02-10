@@ -137,7 +137,8 @@ MainWindowView::MainWindowView(System::MainWindow& window, App::ImGuiLayer& imgu
         Components::TaskListPanel::Callbacks{.onTaskAdded = m_callbacks.onTaskAdded,
                                              .onTaskRemoved = m_callbacks.onTaskRemoved,
                                              .onTaskUpdated = m_callbacks.onTaskUpdated,
-                                             .onTaskToggled = m_callbacks.onTaskCompletionToggled});
+                                             .onTaskToggled = m_callbacks.onTaskCompletionToggled,
+                                             .onTaskMoved = m_callbacks.onTaskMoved});
 }
 
 void MainWindowView::setWellnessTimers(Core::WellnessTimer* water, Core::WellnessTimer* standup,
@@ -544,7 +545,7 @@ void MainWindowView::renderEditTaskPopup() {
         ImGui::PopStyleColor();
         ImGui::Spacing();
 
-        constexpr float input_width = 150.0f;
+        constexpr float input_width = 60.0f;
         constexpr float button_size = 35.0f;
 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);

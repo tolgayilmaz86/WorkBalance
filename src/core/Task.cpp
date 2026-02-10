@@ -37,6 +37,10 @@ void TaskManager::updateTask(size_t index, std::string_view name, int estimated,
         task->name = name;
         task->estimated_pomodoros = estimated;
         task->completed_pomodoros = completed;
+        // Auto-mark as complete when pomodoros are achieved
+        if (task->completed_pomodoros >= task->estimated_pomodoros) {
+            task->completed = true;
+        }
         updateCounters();
     }
 }
@@ -51,6 +55,10 @@ void TaskManager::toggleTaskCompletion(size_t index) {
 void TaskManager::incrementTaskPomodoros(size_t index) {
     if (Task* task = getTask(index); task != nullptr) {
         task->completed_pomodoros++;
+        // Auto-mark as complete when pomodoros are achieved
+        if (task->completed_pomodoros >= task->estimated_pomodoros) {
+            task->completed = true;
+        }
         updateCounters();
     }
 }
@@ -60,6 +68,25 @@ std::vector<const Task*> TaskManager::getIncompleteTasks() const {
                            std::views::transform([](const Task& t) { return &t; });
 
     return {incomplete_view.begin(), incomplete_view.end()};
+}
+
+void TaskManager::moveTask(size_t from_index, size_t to_index) {
+    if (from_index >= m_tasks.size() || to_index >= m_tasks.size() || from_index == to_index) {
+        return;
+    }
+
+    if (from_index < to_index) {
+        // Moving forward: rotate [from, to+1) left by 1
+        std::rotate(m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(from_index),
+                    m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(from_index + 1),
+                    m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(to_index + 1));
+    } else {
+        // Moving backward: rotate [to, from+1) right by 1
+        std::rotate(m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(to_index),
+                    m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(from_index),
+                    m_tasks.begin() + static_cast<std::vector<Task>::difference_type>(from_index + 1));
+    }
+    // No need to update counters as we're just reordering
 }
 
 std::span<const Task> TaskManager::getTasks() const noexcept {

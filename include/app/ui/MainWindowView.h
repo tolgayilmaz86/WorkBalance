@@ -42,6 +42,7 @@ struct MainWindowCallbacks {
     std::function<void(size_t index)> onTaskRemoved;
     std::function<void(size_t index, std::string_view name, int estimated, int completed)> onTaskUpdated;
     std::function<void(size_t index)> onTaskCompletionToggled;
+    std::function<void(size_t from_index, size_t to_index)> onTaskMoved;
     // Navigation callback
     std::function<void(WorkBalance::NavigationTab)> onTabChanged;
 
@@ -59,6 +60,7 @@ struct MainWindowCallbacks {
                                    .onTaskRemoved = std::move(task.onRemove),
                                    .onTaskUpdated = std::move(task.onUpdate),
                                    .onTaskCompletionToggled = std::move(task.onToggleCompletion),
+                                   .onTaskMoved = std::move(task.onMove),
                                    .onTabChanged = std::move(window.onTabChanged)};
     }
 };

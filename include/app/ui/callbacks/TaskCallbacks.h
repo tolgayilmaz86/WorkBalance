@@ -11,6 +11,7 @@ struct TaskCallbacks {
     std::function<void(size_t index)> onRemove;
     std::function<void(size_t index, std::string_view name, int estimated, int completed)> onUpdate;
     std::function<void(size_t index)> onToggleCompletion;
+    std::function<void(size_t from_index, size_t to_index)> onMove;
 };
 
 } // namespace WorkBalance::App::UI

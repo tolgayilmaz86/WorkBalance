@@ -100,6 +100,7 @@ class Application::Impl {
     void removeTask(size_t index);
     void updateTask(size_t index, std::string_view name, int estimated, int completed);
     void toggleTaskCompletion(size_t index);
+    void moveTask(size_t from_index, size_t to_index);
     void renderMainWindowFrame();
     void updateWindowTitle(int remaining_seconds);
     void loadPersistedData();
@@ -186,6 +187,7 @@ Application::Impl::Impl(bool launched_at_startup)
               .onTaskUpdated = [this](size_t index, std::string_view name, int estimated,
                                       int completed) { updateTask(index, name, estimated, completed); },
               .onTaskCompletionToggled = [this](size_t index) { toggleTaskCompletion(index); },
+              .onTaskMoved = [this](size_t from_index, size_t to_index) { moveTask(from_index, to_index); },
               .onTabChanged = [this](WorkBalance::NavigationTab /*tab*/) { /* Background color handled in view */ }}),
       m_overlay_view(m_imgui_layer, m_timer, m_state),
       m_water_timer(std::make_unique<Core::WellnessTimer>(Core::WellnessType::Water,
@@ -501,6 +503,24 @@ void Application::Impl::toggleTaskCompletion(size_t index) {
 
     m_task_manager.toggleTaskCompletion(index);
     updatePomodoroCounters();
+}
+
+void Application::Impl::moveTask(size_t from_index, size_t to_index) {
+    if (!isValidTaskIndex(from_index) || !isValidTaskIndex(to_index)) {
+        return;
+    }
+
+    m_task_manager.moveTask(from_index, to_index);
+    // Adjust current task index if it was affected by the move
+    if (m_state.current_task_index == static_cast<int>(from_index)) {
+        m_state.current_task_index = static_cast<int>(to_index);
+    } else if (from_index < to_index && m_state.current_task_index > static_cast<int>(from_index) &&
+               m_state.current_task_index <= static_cast<int>(to_index)) {
+        m_state.current_task_index--;
+    } else if (from_index > to_index && m_state.current_task_index >= static_cast<int>(to_index) &&
+               m_state.current_task_index < static_cast<int>(from_index)) {
+        m_state.current_task_index++;
+    }
 }
 
 void Application::Impl::renderMainWindowFrame() {

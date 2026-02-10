@@ -30,6 +30,8 @@ class TaskManager {
 
     void incrementTaskPomodoros(size_t index);
 
+    void moveTask(size_t from_index, size_t to_index);
+
     [[nodiscard]] std::vector<const Task*> getIncompleteTasks() const;
 
     [[nodiscard]] std::span<const Task> getTasks() const noexcept;

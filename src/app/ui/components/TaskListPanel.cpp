@@ -71,6 +71,24 @@ void TaskListPanel::renderTaskItem(size_t index, const Core::Task& task) {
     const ImU32 bg_color = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.08f));
     draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + item_width, cursor_pos.y + item_height), bg_color, 8.0f);
 
+    // Place an invisible selectable over the item area for drag-drop target only
+    // (Selectable does NOT steal clicks from overlapping buttons)
+    ImGui::SetCursorScreenPos(cursor_pos);
+    ImGui::Selectable(("##item_drop" + std::to_string(index)).c_str(), false, ImGuiSelectableFlags_AllowOverlap,
+                      ImVec2(item_width, item_height));
+
+    // Drop target on the selectable
+    if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TASK_REORDER")) {
+            const size_t from_index = *static_cast<const size_t*>(payload->Data);
+            const size_t to_index = index;
+            if (from_index != to_index && m_callbacks.onTaskMoved) {
+                m_callbacks.onTaskMoved(from_index, to_index);
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     constexpr float left_padding = 16.0f;
     constexpr float top_padding = 12.0f;
     constexpr float right_padding = 16.0f;
@@ -158,13 +176,34 @@ void TaskListPanel::renderTaskItem(size_t index, const Core::Task& task) {
 
     const float progress_width = ImGui::CalcTextSize(progress.c_str()).x;
     constexpr float menu_button_width = 24.0f;
+    constexpr float drag_handle_width = 20.0f;
 
-    ImGui::SetCursorScreenPos(
-        ImVec2(cursor_pos.x + item_width - progress_width - menu_button_width - right_padding - 8.0f,
-               cursor_pos.y + top_padding + 4.0f));
+    ImGui::SetCursorScreenPos(ImVec2(cursor_pos.x + item_width - progress_width - menu_button_width -
+                                         drag_handle_width - right_padding - 16.0f,
+                                     cursor_pos.y + top_padding + 4.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
     ImGui::Text("%s", progress.c_str());
     ImGui::PopStyleColor();
+
+    // Drag handle
+    ImGui::SetCursorScreenPos(
+        ImVec2(cursor_pos.x + item_width - menu_button_width - drag_handle_width - 16.0f, cursor_pos.y + top_padding));
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.8f, 1.0f, 0.2f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.8f, 1.0f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.85f, 1.0f, 0.75f));
+
+    ImGui::Button(ICON_FA_GRIP_VERTICAL, ImVec2(drag_handle_width, 20.0f));
+
+    // Drag source - only from the drag handle
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+        ImGui::SetDragDropPayload("TASK_REORDER", &index, sizeof(size_t));
+        ImGui::Text("Reorder: %s", task.name.c_str());
+        ImGui::EndDragDropSource();
+    }
+
+    ImGui::PopStyleColor(4);
 
     // Edit button
     ImGui::SetCursorScreenPos(ImVec2(cursor_pos.x + item_width - menu_button_width - 8.0f, cursor_pos.y + top_padding));
